@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<!-- saved from url=(0038)http://localhost:8004/app/AURUMv5.html -->
+<html lang="de"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AURUM">
+<meta name="theme-color" content="#faf5eb">
+<link rel="manifest" href="http://localhost:8004/manifest.webmanifest">
+<link rel="apple-touch-icon" href="http://localhost:8004/icons/icon-180.png">
+<title>AURUM v4 · Plan + Anker</title>
+<style>
+:root{
+  --bg-ambient:    #ebe3d3;
+  --bg-screen:     #faf5eb;
+  --bg-card:       #ffffff;
+  --bg-subtle:     #f2ecdf;
+  --bg-nav:        #f5efe2;
+  --bg-muted:      #ece5d4;
+  --border-subtle: #e5ddcc;
+  --border-medium: #d6cdb8;
+  --text-primary:   #2e2820;
+  --text-secondary: #7a7062;
+  --text-tertiary:  #a89f8d;
+  --text-quaternary:#c4bca8;
+  --gold:      #b89668;
+  --gold-dark: #9a7d52;
+  --gold-soft: #d4b88a;
+  --gold-pale: #ece0c6;
+  --phone-bezel: #3a3228;
+  /* Marker-Typ-Farben */
+  --mt-anchor:      #c4bca8;
+  --mt-audio:       #b89668;
+  --mt-compression: #c08a7a;
+  --mt-planned:     #b5c5d5;
+  --rec-red:        #b85555;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+/* v5: Vollbild ohne Phone-Rahmen. Top-Padding respektiert iPhone-Notch via safe-area. */
+body{background:var(--bg-screen);font-family:system-ui,-apple-system,sans-serif;color:var(--text-primary);overflow-x:hidden}
+.phone{width:100%;min-height:100vh;background:var(--bg-screen);padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);position:relative;overflow:hidden;display:flex;flex-direction:column}
+.notch-bar,.notch{display:none}
+
+/* v5: Admin-/Praesentationsmodus. Elemente mit .admin-only sind nur sichtbar,
+   wenn body die Klasse .admin-mode traegt (Default via JS: an). */
+body:not(.admin-mode) .admin-only{display:none !important}
+
+.screen{display:none;flex-direction:column;min-height:calc(100vh - env(safe-area-inset-top,0) - env(safe-area-inset-bottom,0));flex:1}
+.screen.active{display:flex}
+
+/* ═══ LOGIN ═══ */
+#s-login{background:var(--bg-screen);color:var(--text-primary);padding:48px 28px 32px;justify-content:space-between}
+.login-brand{text-align:center;margin-top:20px}
+.login-logo{font-size:34px;font-weight:700;letter-spacing:10px;color:var(--gold);font-family:Georgia,'Times New Roman',serif}
+.login-tagline{font-size:12px;color:var(--text-secondary);margin-top:10px;letter-spacing:2px;text-transform:uppercase}
+.login-heading{font-size:20px;font-weight:700;color:var(--text-primary);margin-top:40px;text-align:center}
+.login-sub{font-size:13px;color:var(--text-secondary);text-align:center;margin-top:6px;line-height:1.5}
+.login-form{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+.login-field{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--text-primary);outline:none;font-family:inherit;transition:border-color .15s}
+.login-field:focus{border-color:var(--gold)}
+.login-field::placeholder{color:var(--text-tertiary)}
+.login-primary{background:var(--gold);color:#fff;border:none;padding:15px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px;transition:background .15s}
+.login-primary:hover{background:var(--gold-dark)}
+.login-primary:disabled{opacity:.5;cursor:not-allowed}
+.login-toggle-row{text-align:center;font-size:13px;color:var(--text-secondary);margin-top:4px}
+.login-toggle-row .toggle-link{color:var(--gold-dark);cursor:pointer;font-weight:600;margin-left:4px}
+.login-msg{text-align:center;font-size:12px;min-height:16px;margin-top:4px;line-height:1.4}
+.login-msg.err{color:#b85555}
+.login-msg.ok{color:#6a8a5a}
+.login-footer{text-align:center;font-size:10px;color:var(--text-quaternary);letter-spacing:1px;margin-top:auto}
+
+/* ═══ TIMELINE ═══ */
+#s-main{background:var(--bg-screen);color:var(--text-primary)}
+.main-header{padding:14px 18px 8px}
+.main-date{font-size:24px;font-weight:700;color:var(--text-primary)}
+.main-date span{color:var(--gold)}
+.main-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:10px}
+.wday{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.wday-name{font-size:9px;color:var(--text-tertiary);text-transform:uppercase}
+.wday-num{font-size:14px;font-weight:500;color:var(--text-secondary);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.wday-num.today{background:var(--gold);color:#fff;font-weight:700}
+.wday-num.selected{border:2px solid var(--text-primary);color:var(--text-primary)}
+.wday-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:8px}
+.wdot{width:5px;height:5px;border-radius:50%}
+
+/* v2: Timeline im Struktured-Stil, umgefaerbt auf AURUM.
+   Linie durchgehend in der track-Spalte, Marker-Bubbles sitzen auf der Linie. */
+.tl-scroll{flex:1;overflow-y:auto;padding:10px 12px 100px}
+.tl-scroll::-webkit-scrollbar{display:none}
+.tl-empty{padding:60px 18px;text-align:center;color:var(--text-tertiary);font-size:13px;line-height:1.6}
+.tl-empty small{color:var(--text-quaternary);display:block;margin-top:8px;font-size:11px}
+
+.timeline-item{display:grid;grid-template-columns:40px 42px 1fr 30px;align-items:start;gap:8px;margin-bottom:2px;min-height:58px;position:relative}
+.timeline-item .time{color:var(--text-tertiary);font-size:11px;line-height:1.2;padding-top:12px;text-align:right;font-variant-numeric:tabular-nums}
+.timeline-item .track{position:relative;min-height:58px}
+.timeline-item .track::before{content:"";position:absolute;left:19px;top:-2px;bottom:-2px;width:2px;border-radius:2px;background:var(--border-medium)}
+.timeline-item:first-child .track::before{top:50%}
+.timeline-item:last-child .track::before{bottom:50%}
+.bubble{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;position:relative;z-index:1;color:#fff;box-shadow:0 2px 6px rgba(46,40,32,0.12);margin-top:8px}
+/* v3: Anker ist nur ein kleiner roter Kreis auf der Linie, kein Icon, kein Label. */
+.bubble.anchor{width:20px;height:20px;border-radius:50%;background:#b85555;margin-top:18px;margin-left:10px;box-shadow:0 1px 3px rgba(184,85,85,0.35)}
+.bubble.anchor > svg{display:none}
+.bubble.audio{background:var(--mt-audio)}
+.bubble.compression{background:var(--mt-compression)}
+.bubble.planned{background:var(--mt-planned);border:2px dashed rgba(255,255,255,0.55)}
+.bubble.planned.passed{border-style:solid;opacity:.85}
+.item-content{padding-top:8px;cursor:pointer;min-width:0}
+.item-content small{display:block;font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.6px}
+.item-content strong{display:block;margin-top:2px;font-size:14px;font-weight:600;color:var(--text-primary);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-content p{margin:3px 0 0;font-size:11px;color:var(--text-secondary);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.tl-tag{font-size:9px;padding:2px 7px;border-radius:10px;background:var(--gold-pale);color:var(--gold-dark);text-transform:lowercase;letter-spacing:.3px}
+.timeline-item.done .item-content strong,.timeline-item.done .item-content small{text-decoration:line-through;opacity:.6}
+.check-btn{margin-top:14px;width:24px;height:24px;border-radius:50%;border:2px solid var(--mt-planned);background:transparent;cursor:pointer;padding:0;display:grid;place-items:center}
+.check-btn.done{background:var(--mt-planned);border-color:var(--mt-planned)}
+.check-btn.hidden{visibility:hidden;pointer-events:none}
+
+/* Bottom Nav */
+.bottom-nav{background:var(--bg-nav);display:flex;justify-content:space-around;align-items:center;padding:10px 0 14px;border-top:0.5px solid var(--border-subtle);position:relative}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--text-tertiary);font-size:10px;padding:2px 10px}
+.nav-item.active{color:var(--gold)}
+.nav-fab{position:absolute;right:16px;top:-22px;width:44px;height:44px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;border:3px solid var(--bg-screen);box-shadow:0 4px 12px rgba(184,150,104,0.3)}
+
+/* ═══ MARKER-SHEET ═══ */
+.sheet-backdrop{display:none;position:absolute;inset:0;background:rgba(46,40,32,0.35);z-index:10;align-items:flex-end;justify-content:center}
+.sheet-backdrop.open{display:flex}
+.sheet{background:var(--bg-screen);width:100%;border-radius:24px 24px 0 0;padding:14px 18px 24px;animation:sheetIn .2s ease-out}
+@keyframes sheetIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border-medium);margin:0 auto 16px}
+.sheet-title{font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.sheet-sub{font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.5}
+.sheet-option{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-subtle);cursor:pointer;margin-bottom:8px;transition:background .15s}
+.sheet-option:hover{background:var(--bg-subtle)}
+.sheet-opt-icon{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.sheet-opt-text{flex:1}
+.sheet-opt-title{font-size:14px;font-weight:600;color:var(--text-primary)}
+.sheet-opt-desc{font-size:11px;color:var(--text-secondary);margin-top:2px;line-height:1.4}
+.sheet-cancel{display:block;width:100%;text-align:center;padding:12px;margin-top:8px;font-size:13px;color:var(--text-secondary);background:none;border:none;cursor:pointer}
+
+/* ═══ AUDIO/PLANNED ERFASSEN ═══ */
+#s-audio,#s-planned,#s-marker-detail{background:var(--bg-screen);color:var(--text-primary);padding:14px 18px 24px}
+.mk-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.mk-back{background:none;border:none;font-size:26px;color:var(--text-secondary);cursor:pointer;line-height:1;padding:4px 8px}
+.mk-save{background:var(--gold);color:#fff;border:none;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer}
+.mk-save:disabled{opacity:.4;cursor:not-allowed}
+.mk-heading{font-size:24px;font-weight:700;margin-bottom:6px}
+.mk-heading .accent{color:var(--gold)}
+.mk-intro{font-size:13px;color:var(--text-secondary);margin-bottom:22px;line-height:1.5}
+.mk-field-label{font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin:16px 0 6px}
+.mk-input{width:100%;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text-primary);font-family:inherit;outline:none}
+.mk-input:focus{border-color:var(--gold)}
+.mk-textarea{width:100%;min-height:110px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text-primary);font-family:inherit;outline:none;resize:vertical;line-height:1.5}
+.mk-textarea:focus{border-color:var(--gold)}
+.mk-hint{font-size:11px;color:var(--text-tertiary);margin-top:6px;line-height:1.4;font-style:italic}
+.mk-time-row{display:flex;gap:10px}
+.mk-time-row .mk-input{flex:1}
+
+/* Audio-Aufnahme */
+.rec-card{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:14px;padding:18px 14px;text-align:center}
+.rec-status{font-size:12px;color:var(--text-secondary);margin-bottom:12px;min-height:16px}
+.rec-status.recording{color:var(--rec-red)}
+.rec-time{font-size:32px;font-weight:300;color:var(--text-primary);font-variant-numeric:tabular-nums;margin-bottom:14px;letter-spacing:1px}
+.rec-time.recording{color:var(--rec-red)}
+.rec-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:transform .15s,background .15s}
+.rec-btn.idle{background:var(--mt-audio)}
+.rec-btn.idle:hover{background:var(--gold-dark)}
+.rec-btn.recording{background:var(--rec-red)}
+.rec-btn:disabled{opacity:.5;cursor:not-allowed}
+.rec-meter{display:flex;justify-content:center;gap:3px;height:24px;align-items:flex-end;margin:0 0 14px}
+.rec-meter span{width:4px;background:var(--mt-audio);border-radius:2px;transition:height .1s}
+
+/* v4: Farbauswahl fuer geplante Marker */
+.planned-colors{display:flex;gap:10px;padding:8px 0;flex-wrap:wrap}
+.planned-colors button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:border-color .15s,transform .15s}
+.planned-colors button.active{border-color:var(--text-primary);transform:scale(1.12)}
+
+/* v4: Fulfill-Liste in Anker-Detail */
+.det-fulfill-btn{display:block;width:100%;text-align:left;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:10px;color:var(--text-primary);font-size:13px;cursor:pointer;margin-bottom:6px;font-family:inherit;transition:background .15s}
+.det-fulfill-btn:hover{background:var(--bg-subtle)}
+.det-fulfill-btn .fb-time{font-size:10px;color:var(--text-tertiary);display:block;margin-top:2px}
+.audio-player{margin-top:14px;width:100%}
+.audio-player audio{width:100%;display:block}
+.audio-actions{display:flex;gap:8px;margin-top:10px}
+.audio-actions button{flex:1;padding:8px;font-size:12px;background:var(--bg-subtle);border:1px solid var(--border-subtle);border-radius:8px;color:var(--text-secondary);cursor:pointer}
+.audio-actions button:hover{background:var(--bg-muted)}
+
+/* ═══ NOTIZEN ═══ */
+#s-notes{background:var(--bg-screen);color:var(--text-primary)}
+.notes-header{padding:14px 18px 8px}
+.notes-heading{font-size:24px;font-weight:700}
+.notes-heading .accent{color:var(--gold)}
+.notes-sub{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.notes-scroll{flex:1;overflow-y:auto;padding:12px 18px 90px}
+.notes-scroll::-webkit-scrollbar{display:none}
+.notes-empty{padding:60px 18px;text-align:center;color:var(--text-tertiary);font-size:13px;line-height:1.6}
+.notes-empty small{color:var(--text-quaternary);display:block;margin-top:8px;font-size:11px}
+.note-card{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:background .15s}
+.note-card:hover{background:var(--bg-subtle)}
+.note-meta{font-size:10px;color:var(--text-tertiary);margin-bottom:4px;display:flex;justify-content:space-between}
+.note-linked{font-size:9px;color:var(--gold-dark);background:var(--gold-pale);padding:2px 7px;border-radius:10px}
+.note-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.note-title.untitled{color:var(--text-tertiary);font-weight:500;font-style:italic}
+.note-content{font-size:12px;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note-tags{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+
+#s-note-edit{background:var(--bg-screen);color:var(--text-primary);padding:14px 18px 24px}
+.note-title-input{width:100%;background:transparent;border:none;font-size:22px;font-weight:700;color:var(--text-primary);outline:none;font-family:inherit;padding:8px 0;margin-bottom:6px}
+.note-title-input::placeholder{color:var(--text-tertiary)}
+.note-content-input{width:100%;flex:1;min-height:260px;background:transparent;border:none;font-size:14px;color:var(--text-primary);line-height:1.6;outline:none;font-family:inherit;resize:none}
+.note-content-input::placeholder{color:var(--text-tertiary)}
+.note-tags-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:12px;padding:10px 0;border-top:1px solid var(--border-subtle)}
+.tag-chip{font-size:11px;padding:4px 10px;border-radius:12px;background:var(--gold-pale);color:var(--gold-dark);display:inline-flex;align-items:center;gap:4px}
+.tag-chip.suggested{background:var(--bg-subtle);color:var(--text-secondary);border:1px dashed var(--border-medium)}
+.tag-chip .remove{cursor:pointer;opacity:.6;font-size:14px;line-height:1}
+.tag-input{font-size:12px;background:transparent;border:none;outline:none;padding:4px;min-width:80px;color:var(--text-primary);font-family:inherit}
+.note-delete{background:none;border:none;color:#b85555;font-size:13px;padding:12px;cursor:pointer;text-align:center;margin-top:8px}
+
+/* ═══ MARKER DETAIL ═══ */
+.det-type-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);background:var(--bg-subtle);padding:4px 10px;border-radius:10px;margin-bottom:14px}
+.det-type-badge .dot{width:8px;height:8px;border-radius:50%}
+.det-time{font-size:28px;font-weight:300;color:var(--text-primary);font-variant-numeric:tabular-nums;line-height:1.1}
+.det-date{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.det-section{margin-top:20px}
+.det-label{font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.det-text{font-size:14px;color:var(--text-primary);line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.det-text.muted{color:var(--text-secondary);font-style:italic}
+.det-summary-card{background:var(--bg-card);border:1px solid var(--border-subtle);border-left:3px solid var(--gold);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text-primary);line-height:1.5}
+.det-summary-card .src{font-size:9px;color:var(--gold-dark);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.det-loc{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);background:var(--bg-subtle);padding:6px 10px;border-radius:10px}
+.det-tags-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.det-actions{display:flex;flex-direction:column;gap:8px;margin:24px 18px 12px}
+.det-btn{padding:12px;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:none}
+.det-btn.primary{background:var(--gold);color:#fff}
+.det-btn.primary:hover{background:var(--gold-dark)}
+.det-btn.ghost{background:transparent;border:1px solid var(--border-subtle);color:var(--text-primary)}
+.det-btn.ghost:hover{background:var(--bg-subtle)}
+.det-btn.danger{background:transparent;color:#b85555;font-weight:500}
+.det-pending{background:var(--bg-subtle);border:1px dashed var(--border-medium);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--text-secondary);font-style:italic;line-height:1.5}
+
+/* ═══ EINSTELLUNGEN ═══ */
+#s-settings{background:var(--bg-screen);padding:0}
+.settings-header{padding:14px 18px 4px}
+.settings-heading{font-size:24px;font-weight:700}
+.settings-heading .accent{color:var(--gold)}
+.settings-sub{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.set-scroll{flex:1;overflow-y:auto;padding:14px 18px 90px}
+.set-scroll::-webkit-scrollbar{display:none}
+.set-section{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.set-section-title{font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.set-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border-subtle)}
+.set-row:last-child{border-bottom:none}
+.set-row-label{font-size:13px;color:var(--text-primary)}
+.set-row-sub{font-size:11px;color:var(--text-tertiary);margin-top:2px;line-height:1.4}
+.set-row-control{flex-shrink:0;margin-left:12px}
+.set-slider-row{padding:12px 0;border-bottom:1px solid var(--border-subtle)}
+.set-slider-row .set-row-label{margin-bottom:6px}
+.set-slider-value{font-size:13px;color:var(--gold-dark);font-weight:600;font-variant-numeric:tabular-nums}
+.set-slider{width:100%;-webkit-appearance:none;height:4px;background:var(--border-medium);border-radius:2px;outline:none;margin-top:8px}
+.set-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);cursor:pointer}
+.set-slider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--gold);cursor:pointer;border:none}
+.set-toggle{position:relative;width:42px;height:24px;background:var(--border-medium);border-radius:12px;cursor:pointer;transition:background .2s;border:none;padding:0}
+.set-toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
+.set-toggle.on{background:var(--gold)}
+.set-toggle.on::after{transform:translateX(18px)}
+.set-select{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--text-primary);font-family:inherit;cursor:pointer}
+.set-info{font-size:11px;color:var(--text-tertiary);line-height:1.5;padding:8px 14px;text-align:center}
+.set-account{font-size:12px;color:var(--text-secondary);margin-bottom:12px;padding:6px 0}
+.set-logout{background:transparent;color:#b85555;border:1px solid #b85555;border-radius:10px;padding:10px;width:100%;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.set-logout:hover{background:rgba(184,85,85,0.08)}
+
+</style>
+</head>
+<body class="admin-mode">
+<div class="phone">
+  <div class="notch-bar"><div class="notch"></div></div>
+
+  <!-- ═══ LOGIN ═══ -->
+  <div class="screen" id="s-login">
+    <div>
+      <div class="login-brand">
+        <div class="login-logo">AURUM</div>
+        <div class="login-tagline">Verstehen · Erinnern · Ruhen</div>
+      </div>
+      <div class="login-heading" id="login-heading">Willkommen zurück</div>
+      <div class="login-sub" id="login-sub">Melde dich an, um deine Marker<br>zu öffnen.</div>
+      <div class="login-form">
+        <input class="login-field" type="email" id="auth-email" placeholder="E-Mail" autocomplete="email">
+        <input class="login-field" type="password" id="auth-password" placeholder="Passwort" autocomplete="current-password">
+        <button class="login-primary" id="auth-submit" onclick="submitAuth()">Einloggen</button>
+        <div class="login-msg" id="auth-msg"></div>
+        <div class="login-toggle-row" id="auth-toggle-row">
+          Noch kein Konto?<span class="toggle-link" onclick="toggleAuthMode()">Registrieren</span>
+        </div>
+      </div>
+    </div>
+    <div class="login-footer admin-only">AURUM · DIPLOMARBEIT · v5 · Vollbild + Admin</div>
+  </div>
+
+  <!-- ═══ MAIN / TIMELINE ═══ -->
+  <div class="screen active" id="s-main">
+    <div class="main-header">
+      <div class="main-date" id="main-date-label">19. April <span>2026</span></div>
+      <div class="main-week" id="main-week"><div class="wday"><span class="wday-name">Mo.</span>
+      <span class="wday-num  ">13</span>
+      <div class="wday-dots"><span class="wdot" style="background:#c08a7a"></span><span class="wdot" style="background:#7a9a6c"></span></div></div><div class="wday"><span class="wday-name">Di.</span>
+      <span class="wday-num  ">14</span>
+      <div class="wday-dots"><span class="wdot" style="background:#7a9a6c"></span></div></div><div class="wday"><span class="wday-name">Mi.</span>
+      <span class="wday-num  ">15</span>
+      <div class="wday-dots"><span class="wdot" style="background:#7a9a6c"></span></div></div><div class="wday"><span class="wday-name">Do.</span>
+      <span class="wday-num  ">16</span>
+      <div class="wday-dots"><span class="wdot" style="background:#c08a7a"></span><span class="wdot" style="background:#7a9a6c"></span></div></div><div class="wday"><span class="wday-name">Fr.</span>
+      <span class="wday-num  ">17</span>
+      <div class="wday-dots"><span class="wdot" style="background:#7a9a6c"></span></div></div><div class="wday"><span class="wday-name">Sa.</span>
+      <span class="wday-num  ">18</span>
+      <div class="wday-dots"><span class="wdot" style="background:#c08a7a"></span></div></div><div class="wday"><span class="wday-name">So.</span>
+      <span class="wday-num today ">19</span>
+      <div class="wday-dots"><span class="wdot" style="background:#b89668"></span><span class="wdot" style="background:#c08a7a"></span><span class="wdot" style="background:#b5c5d5"></span></div></div></div>
+    </div>
+    <div class="tl-scroll" id="tl-scroll"><div class="timeline-item" title="12:28">
+    <div class="time">12:28</div>
+    <div class="track"><div class="bubble anchor"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="6"></circle></svg></div></div>
+    <div class="item-content"></div>
+    <button class="check-btn hidden"></button></div><div class="timeline-item" title="17:28">
+    <div class="time">17:28</div>
+    <div class="track"><div class="bubble anchor"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="6"></circle></svg></div></div>
+    <div class="item-content"></div>
+    <button class="check-btn hidden"></button></div><div class="timeline-item">
+    <div class="time">17:28</div>
+    <div class="track"><div class="bubble audio"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="4" y1="12" x2="4" y2="12"></line><line x1="8" y1="9" x2="8" y2="15"></line><line x1="12" y1="6" x2="12" y2="18"></line><line x1="16" y1="9" x2="16" y2="15"></line><line x1="20" y1="12" x2="20" y2="12"></line></svg></div></div>
+    <div class="item-content"><small>Audiomarker</small><strong>Audiomarker</strong><p>Inhalt liegt in der verknüpften Notiz</p></div>
+    <button class="check-btn hidden"></button></div><div class="timeline-item" title="17:38">
+    <div class="time">17:38</div>
+    <div class="track"><div class="bubble anchor"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="6"></circle></svg></div></div>
+    <div class="item-content"></div>
+    <button class="check-btn hidden"></button></div><div class="timeline-item done">
+    <div class="time">17:45</div>
+    <div class="track"><div class="bubble planned passed" style="background:#b5c5d5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg></div></div>
+    <div class="item-content"><small>Geplant</small><strong>asdads</strong></div>
+    <button class="check-btn done" style="border-color:#b5c5d5;background:#b5c5d5;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></button></div><div class="timeline-item" title="17:53">
+    <div class="time">17:53</div>
+    <div class="track"><div class="bubble anchor"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="6"></circle></svg></div></div>
+    <div class="item-content"></div>
+    <button class="check-btn hidden"></button></div><div class="timeline-item">
+    <div class="time">18:06</div>
+    <div class="track"><div class="bubble compression"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M6 8 L12 12 L6 16"></path><path d="M18 8 L12 12 L18 16"></path></svg></div></div>
+    <div class="item-content"><small>Kompression</small><strong>Kompression</strong><p>manuell protokolliert</p></div>
+    <button class="check-btn hidden"></button></div></div>
+
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="goTo(&#39;s-main&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="3" cy="6" r="1" fill="currentColor"></circle><circle cx="3" cy="12" r="1" fill="currentColor"></circle><circle cx="3" cy="18" r="1" fill="currentColor"></circle></svg>
+        Timeline
+      </div>
+      <div class="nav-item" onclick="goTo(&#39;s-notes&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10l4 4v14H5V3z"></path><polyline points="15 3 15 7 19 7"></polyline><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>
+        Notizen
+      </div>
+      <div class="nav-item" onclick="goTo(&#39;s-settings&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+        Einstellungen
+      </div>
+      <div class="nav-fab" onclick="openMarkerSheet()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </div>
+    </div>
+
+    <div class="sheet-backdrop" id="marker-sheet" onclick="if(event.target===this)closeMarkerSheet()">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Marker setzen</div>
+        <div class="sheet-sub">Der Armreif setzt diese Marker normalerweise direkt im Moment. Hier kannst du sie manuell anlegen.</div>
+
+        <div class="sheet-option" id="sheet-opt-anchor" onclick="createAnchor()">
+          <div class="sheet-opt-icon" style="background:var(--mt-anchor)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="6"></circle></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Anker</div>
+            <div class="sheet-opt-desc">Leerer Zeitpunkt mit Ort. Lagert einen Gedanken aus, ohne ihn festzuhalten.</div>
+          </div>
+        </div>
+
+        <div class="sheet-option" onclick="goTo(&#39;s-audio&#39;)">
+          <div class="sheet-opt-icon" style="background:var(--mt-audio)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="4" y1="12" x2="4" y2="12"></line><line x1="8" y1="9" x2="8" y2="15"></line><line x1="12" y1="6" x2="12" y2="18"></line><line x1="16" y1="9" x2="16" y2="15"></line><line x1="20" y1="12" x2="20" y2="12"></line></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Audiomarker</div>
+            <div class="sheet-opt-desc">Zeitpunkt mit Aufnahme. Inhalt landet automatisch als Notiz, AURA transkribiert im Hintergrund.</div>
+          </div>
+        </div>
+
+        <div class="sheet-option" onclick="goTo(&#39;s-planned&#39;)">
+          <div class="sheet-opt-icon" style="background:var(--mt-planned)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Geplanter Marker</div>
+            <div class="sheet-opt-desc">Zukünftiger Zeitpunkt. Der Armreif baut dort langsam Druck auf.</div>
+          </div>
+        </div>
+
+        <div class="sheet-option" id="sheet-opt-compression" onclick="createCompression()">
+          <div class="sheet-opt-icon" style="background:var(--mt-compression)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M6 8 L12 12 L6 16"></path><path d="M18 8 L12 12 L18 16"></path></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Kompression protokollieren</div>
+            <div class="sheet-opt-desc">Körperlicher Eingriff am Armreif. Hier nur zur Simulation.</div>
+          </div>
+        </div>
+
+        <button class="sheet-cancel" onclick="closeMarkerSheet()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ AUDIOMARKER ERFASSEN ═══ -->
+  <div class="screen" id="s-audio">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="cancelAudioRecording()">‹</button>
+      <button class="mk-save" id="audio-save" onclick="saveAudioMarker()" disabled="">Speichern</button>
+    </div>
+    <div class="mk-heading"><span class="accent">Audio</span>marker</div>
+    <div class="mk-intro">Normalerweise startet der Armreif per Doppelklick auf Button 1 eine Aufnahme. Hier in der App kannst du direkt aufnehmen oder ein Transkript schreiben. Der Inhalt wird automatisch als Notiz gespeichert.</div>
+
+    <div class="mk-field-label">Aufnahme</div>
+    <div class="rec-card">
+      <div class="rec-status" id="rec-status">Tippe auf den Kreis, um die Aufnahme zu starten</div>
+      <div class="rec-time" id="rec-time">00:00</div>
+      <div class="rec-meter" id="rec-meter"></div>
+      <button class="rec-btn idle" id="rec-btn" onclick="toggleRecording()">
+        <svg id="rec-icon" width="28" height="28" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="12" r="6"></circle></svg>
+      </button>
+      <div class="audio-player" id="audio-player" style="display:none">
+        <audio id="audio-preview" controls=""></audio>
+        <div class="audio-actions">
+          <button onclick="discardRecording()">Verwerfen</button>
+          <button onclick="rerecord()">Neu aufnehmen</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mk-field-label">Transkript (optional, falls Aufnahme nicht möglich)</div>
+    <textarea class="mk-textarea" id="audio-transcript" placeholder="Was war der Gedanke?" oninput="onAudioInput()"></textarea>
+    <div class="mk-hint">AURA transkribiert im Hintergrund und schreibt das Transkript in die verknüpfte Notiz.</div>
+
+    <div class="mk-field-label">Zeitpunkt</div>
+    <input class="mk-input" type="time" id="audio-time">
+  </div>
+
+  <!-- ═══ GEPLANTER MARKER ═══ -->
+  <div class="screen" id="s-planned">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="goTo(&#39;s-main&#39;)">‹</button>
+      <button class="mk-save" id="planned-save" onclick="savePlannedMarker()" disabled="">Speichern</button>
+    </div>
+    <div class="mk-heading"><span class="accent">Geplanter</span> Marker</div>
+    <div class="mk-intro">Ein Zeitpunkt in der Zukunft. Der Armreif baut dort graduell Druck auf, bis du reagierst oder den Marker erledigst.</div>
+
+    <div class="mk-field-label">Titel</div>
+    <input class="mk-input" id="planned-title" placeholder="z. B. Einkaufen, Anruf, Durchatmen" oninput="onPlannedInput()">
+
+    <div class="mk-field-label">Zeit</div>
+    <input class="mk-input" type="time" id="planned-time" oninput="onPlannedInput()">
+
+    <div class="mk-field-label">Farbe</div>
+    <div class="planned-colors" id="planned-colors">
+      <button type="button" data-color="#b5c5d5" class="active" style="background:#b5c5d5"></button>
+      <button type="button" data-color="#b89668" style="background:#b89668"></button>
+      <button type="button" data-color="#b85555" style="background:#b85555"></button>
+      <button type="button" data-color="#c08a7a" style="background:#c08a7a"></button>
+      <button type="button" data-color="#7a9a6c" style="background:#7a9a6c"></button>
+      <button type="button" data-color="#c4bca8" style="background:#c4bca8"></button>
+    </div>
+
+    <div class="mk-field-label">Wiederholung</div>
+    <select class="mk-input" id="planned-repeat">
+      <option value="none">nur einmal</option>
+      <option value="weekdays">wochentags (Mo-Fr)</option>
+      <option value="daily">täglich (Mo-So)</option>
+      <option value="weekly">wöchentlich (4 Wochen)</option>
+    </select>
+
+    <div class="mk-hint" id="planned-settings-hint">Druckaufbau-Dauer kommt aus den Einstellungen.</div>
+  </div>
+
+  <!-- ═══ MARKER-DETAIL ═══ -->
+  <div class="screen" id="s-marker-detail">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="closeMarkerDetail()">‹</button>
+      <button class="mk-save" id="det-note-btn" onclick="openLinkedNote()">Zur Notiz</button>
+    </div>
+    <div id="det-body" style="padding:0 18px"></div>
+    <div class="det-actions" id="det-actions"></div>
+  </div>
+
+  <!-- ═══ NOTIZEN ═══ -->
+  <div class="screen" id="s-notes">
+    <div class="notes-header">
+      <div class="notes-heading"><span class="accent">Notizen</span></div>
+      <div class="notes-sub">Bedeutung, die nach dem Moment entsteht.</div>
+    </div>
+    <div class="notes-scroll" id="notes-scroll"></div>
+
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="goTo(&#39;s-main&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="3" cy="6" r="1" fill="currentColor"></circle><circle cx="3" cy="12" r="1" fill="currentColor"></circle><circle cx="3" cy="18" r="1" fill="currentColor"></circle></svg>
+        Timeline
+      </div>
+      <div class="nav-item active" onclick="goTo(&#39;s-notes&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10l4 4v14H5V3z"></path><polyline points="15 3 15 7 19 7"></polyline><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>
+        Notizen
+      </div>
+      <div class="nav-item" onclick="goTo(&#39;s-settings&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+        Einstellungen
+      </div>
+      <div class="nav-fab" onclick="openNewNote()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ NOTIZ BEARBEITEN ═══ -->
+  <div class="screen" id="s-note-edit">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="closeNoteEdit()">‹</button>
+      <button class="mk-save" id="note-save" onclick="saveNote()">Speichern</button>
+    </div>
+    <input class="note-title-input" id="note-title" placeholder="Titel (optional)">
+    <div id="note-linked-banner" style="display:none;font-size:11px;color:var(--gold-dark);background:var(--gold-pale);padding:6px 10px;border-radius:8px;margin-bottom:10px"></div>
+    <textarea class="note-content-input" id="note-content" placeholder="Schreib frei. Gedanken, Situation, Auslöser, Reaktion."></textarea>
+    <div class="note-tags-row" id="note-tags-row">
+      <input class="tag-input" id="note-tag-input" placeholder="+ Tag" onkeydown="if(event.key===&#39;Enter&#39;||event.key===&#39;,&#39;){event.preventDefault();addTagFromInput()}">
+    </div>
+    <button class="note-delete" id="note-delete-btn" onclick="deleteNote()" style="display:none">Notiz löschen</button>
+  </div>
+
+  <!-- ═══ EINSTELLUNGEN ═══ -->
+  <div class="screen" id="s-settings">
+    <div class="settings-header">
+      <div class="settings-heading"><span class="accent">Einstellungen</span></div>
+      <div class="settings-sub">So verhält sich AURUM für dich.</div>
+    </div>
+    <div class="set-scroll">
+      <div class="set-section">
+        <div class="set-section-title">Geplante Marker</div>
+        <div class="set-slider-row">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div class="set-row-label">Druckaufbau am Armreif</div>
+            <div class="set-slider-value"><span id="set-comp-val">30</span>s</div>
+          </div>
+          <div class="set-row-sub">Wie lange der Armreif graduell Druck aufbaut, bis du den Marker erreichst oder ihn am Armreif abbrichst.</div>
+          <input type="range" min="10" max="60" step="5" value="30" class="set-slider" id="set-comp-slider" oninput="onCompSlider()">
+        </div>
+        <div class="set-row">
+          <div>
+            <div class="set-row-label">Wiederholung</div>
+            <div class="set-row-sub">Wenn du nicht reagierst, kann der Armreif den Druckaufbau einmal wiederholen.</div>
+          </div>
+          <select class="set-select set-row-control" id="set-repeat" onchange="onRepeatChange()">
+            <option value="">aus</option>
+            <option value="5">nach 5 min</option>
+            <option value="10">nach 10 min</option>
+            <option value="15">nach 15 min</option>
+            <option value="30">nach 30 min</option>
+            <option value="60">nach 60 min</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="set-section">
+        <div class="set-section-title">Anker</div>
+        <div class="set-row">
+          <div>
+            <div class="set-row-label">Ort speichern</div>
+            <div class="set-row-sub">Beim Setzen eines Ankers werden Koordinaten festgehalten, falls dein iPhone Standort freigibt.</div>
+          </div>
+          <button class="set-toggle" id="set-geo-toggle" onclick="onGeoToggle()"></button>
+        </div>
+      </div>
+
+      <div class="set-section admin-only">
+        <div class="set-section-title">Armreif</div>
+        <div class="set-row">
+          <div>
+            <div class="set-row-label" id="set-ring-label">Nicht gekoppelt</div>
+            <div class="set-row-sub">Bluetooth-Kopplung wird in einem späteren Schritt aktiv. Aktuell läuft die Anbindung über die App selbst.</div>
+          </div>
+          <button class="set-toggle" id="set-ring-toggle" disabled="" style="opacity:.4"></button>
+        </div>
+      </div>
+
+      <div class="set-section">
+        <div class="set-section-title">Modus</div>
+        <div class="set-row">
+          <div>
+            <div class="set-row-label">Admin-Modus</div>
+            <div class="set-row-sub">Zeigt Anker- und Kompressions-Simulation, Ring-Status und Versionsangabe. Fuer Praesentation ausschalten.</div>
+          </div>
+          <button class="set-toggle on" id="set-admin-toggle" onclick="onAdminToggle()"></button>
+        </div>
+      </div>
+
+      <div class="set-section">
+        <div class="set-section-title">Konto</div>
+        <div class="set-account" id="set-account">·</div>
+        <button class="set-logout" onclick="confirmLogout()">Abmelden</button>
+      </div>
+
+      <div class="set-section">
+        <div class="set-section-title">Geraet</div>
+        <div class="set-row-sub" style="margin-bottom:10px">Entfernt die lokale Sitzung und den Onboarding-Stand von diesem Geraet. Beim naechsten Oeffnen startet AURUM wie neu. Die Daten in Supabase bleiben.</div>
+        <button class="set-logout" onclick="resetDeviceState()">Komplett zurücksetzen</button>
+      </div>
+
+      <div class="set-info admin-only">AURUM · Diplomarbeit · v5 · Vollbild + Admin</div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="goTo(&#39;s-main&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><circle cx="3" cy="6" r="1" fill="currentColor"></circle><circle cx="3" cy="12" r="1" fill="currentColor"></circle><circle cx="3" cy="18" r="1" fill="currentColor"></circle></svg>
+        Timeline
+      </div>
+      <div class="nav-item" onclick="goTo(&#39;s-notes&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10l4 4v14H5V3z"></path><polyline points="15 3 15 7 19 7"></polyline><line x1="8" y1="12" x2="16" y2="12"></line><line x1="8" y1="16" x2="13" y2="16"></line></svg>
+        Notizen
+      </div>
+      <div class="nav-item active" onclick="goTo(&#39;s-settings&#39;)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+        Einstellungen
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   AURUM v4 (Plan + Anker)
+   Aufbauend auf v3.
+   1. Geplante Marker: Farbauswahl und Wiederholung (einmal, wochentags,
+      taeglich, woechentlich als naive Instanz-Kopie).
+   2. Anker: Hover-Tooltip mit Zeit und Ort, im Detail Liste offener
+      geplanter Marker des Tages. Ein Klick markiert den geplanten
+      Marker als erledigt, der Anker haelt in seinem sub-Feld fest,
+      was er erledigt hat.
+   Service Worker weiterhin deaktiviert.
+   ═══════════════════════════════════════════════ */
+
+const SUPABASE_URL = 'https://jitkxxpuzmopcrfvzzlz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_dUNie_zHEDP4PKdMgUO20Q_buLMANmM';
+const AUDIO_BUCKET = 'audio-markers';
+
+let AUTH = { access_token:null, refresh_token:null, user:null };
+let authMode = 'login';
+
+/* ─── STORAGE-WRAPPER ─── */
+const storage = {
+  async get(key) {
+    if (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function') {
+      try { const r = await window.storage.get(key); return r ? r.value : null; } catch(e) { return null; }
+    }
+    try { return localStorage.getItem(key); } catch(e) { return null; }
+  },
+  async set(key, val) {
+    if (typeof window !== 'undefined' && window.storage && typeof window.storage.set === 'function') {
+      try { await window.storage.set(key, val); return; } catch(e) {}
+    }
+    try { localStorage.setItem(key, val); } catch(e) {}
+  },
+  async del(key) {
+    if (typeof window !== 'undefined' && window.storage && typeof window.storage.delete === 'function') {
+      try { await window.storage.delete(key); return; } catch(e) {}
+    }
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+};
+
+/* ─── SESSION ─── */
+async function loadSession() {
+  try {
+    const raw = await storage.get('aurum_session');
+    if (raw) {
+      const s = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (s && s.access_token) { AUTH = s; return true; }
+    }
+  } catch(e) {}
+  return false;
+}
+async function saveSession(s) {
+  AUTH = { access_token:s.access_token, refresh_token:s.refresh_token, user:s.user };
+  await storage.set('aurum_session', JSON.stringify(AUTH));
+}
+async function clearSession() {
+  AUTH = { access_token:null, refresh_token:null, user:null };
+  await storage.del('aurum_session');
+}
+async function authFetch(path, body) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
+    method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(data.msg || data.error_description || data.error || 'Authentifizierung fehlgeschlagen');
+  return data;
+}
+const signUp = (e,p) => authFetch('signup', {email:e,password:p});
+const signIn = (e,p) => authFetch('token?grant_type=password', {email:e,password:p});
+async function refreshSession() {
+  if (!AUTH.refresh_token) return false;
+  try { await saveSession(await authFetch('token?grant_type=refresh_token', {refresh_token:AUTH.refresh_token})); return true; }
+  catch(e) { await clearSession(); return false; }
+}
+async function signOut() {
+  if (AUTH.access_token) {
+    try { await fetch(`${SUPABASE_URL}/auth/v1/logout`, {method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${AUTH.access_token}`}}); } catch(e) {}
+  }
+  await clearSession();
+}
+
+/* ─── SUPABASE REST ─── */
+async function sb(path, opts={}) {
+  const makeReq = () => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers:{
+      'apikey':SUPABASE_KEY,
+      'Authorization':`Bearer ${AUTH.access_token || SUPABASE_KEY}`,
+      'Content-Type':'application/json',
+      ...(opts.headers||{})
+    }
+  });
+  let res = await makeReq();
+  if (res.status === 401 && AUTH.refresh_token) {
+    if (await refreshSession()) res = await makeReq();
+    else { showLoginScreen(); throw new Error('Session abgelaufen'); }
+  }
+  if (!res.ok) { const t = await res.text(); console.error('Supabase', res.status, t); throw new Error(t); }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+/* ─── SUPABASE STORAGE ─── */
+async function uploadAudio(blob, markerId, ext) {
+  const path = `${AUTH.user.id}/${markerId}.${ext}`;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${AUDIO_BUCKET}/${path}`, {
+    method:'POST',
+    headers:{
+      'Authorization':`Bearer ${AUTH.access_token}`,
+      'Content-Type': blob.type || 'application/octet-stream',
+      'x-upsert':'true'
+    },
+    body: blob
+  });
+  if (!res.ok) { const t = await res.text(); throw new Error('Upload fehlgeschlagen: ' + t.slice(0,140)); }
+  return path;
+}
+async function getAudioUrl(path) {
+  if (!path) return null;
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/sign/${AUDIO_BUCKET}/${path}?expiresIn=3600`, {
+    method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${AUTH.access_token}`,'Content-Type':'application/json'},
+    body: '{}'
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const suffix = data.signedURL || data.signedUrl || null;
+  return suffix ? `${SUPABASE_URL}/storage/v1${suffix.startsWith('/') ? suffix : '/'+suffix}` : null;
+}
+
+/* ─── DATA ACCESS ─── */
+const fetchMarkers = iso => sb(`markers?marker_date=eq.${iso}&order=start_time.asc,sort_order.asc`);
+async function insertMarker(m) {
+  const rows = await sb('markers', {method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify([m])});
+  return rows[0];
+}
+const patchMarker = (id,ch) => sb(`markers?id=eq.${id}`, {method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(ch)});
+const deleteMarker = id => sb(`markers?id=eq.${id}`, {method:'DELETE'});
+
+const fetchNotes = () => sb('notes?order=updated_at.desc');
+async function insertNote(n) {
+  const rows = await sb('notes', {method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify([n])});
+  return rows[0];
+}
+const patchNote = (id,ch) => sb(`notes?id=eq.${id}`, {method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(ch)});
+const deleteNoteById = id => sb(`notes?id=eq.${id}`, {method:'DELETE'});
+
+async function fetchSettings() {
+  const rows = await sb('user_settings?select=*');
+  if (rows.length) return rows[0];
+  try {
+    const created = await sb('user_settings', {method:'POST',headers:{'Prefer':'return=representation'},body:JSON.stringify([{ user_id: AUTH.user.id }])});
+    return created[0];
+  } catch(e) {
+    const retry = await sb('user_settings?select=*');
+    if (retry.length) return retry[0];
+    throw e;
+  }
+}
+const patchSettings = ch => sb(`user_settings?user_id=eq.${AUTH.user.id}`, {method:'PATCH',headers:{'Prefer':'return=representation'},body:JSON.stringify(ch)});
+
+/* ─── GEOLOCATION ─── */
+function getCurrentPosition() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      err => { console.warn('Geo:', err.message); resolve(null); },
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+    );
+  });
+}
+
+/* ─── STATE ─── */
+const DAYS   = ['Mo.','Di.','Mi.','Do.','Fr.','Sa.','So.'];
+const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+let selectedDay = todayDow();
+let dayMarkers = [];
+let allNotes = [];
+let editingNote = null;
+let currentDetailMarker = null;
+let userSettings = null;
+let weekSummary = {}; // map isoDate -> Set of marker_type, fuer Wochen-Dots
+
+/* ─── DATE UTILS ─── */
+function todayDow() { return (new Date().getDay() + 6) % 7; }
+function mondayOfWeek() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - todayDow());
+}
+function dateForDay(i) {
+  const m = mondayOfWeek();
+  return new Date(m.getFullYear(), m.getMonth(), m.getDate() + i);
+}
+function isoDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtTime(t) { return t ? t.slice(0,5) : ''; }
+function nowTimeStr() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function relativeDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const dDay  = new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const diffDays = Math.round((today - dDay) / 86400000);
+  if (diffDays === 0) return 'Heute';
+  if (diffDays === 1) return 'Gestern';
+  if (diffDays < 7) return `vor ${diffDays} Tagen`;
+  return `${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+}
+function fmtCoord(lat, lng) {
+  if (lat == null || lng == null) return '';
+  const ns = lat >= 0 ? 'N' : 'S';
+  const ew = lng >= 0 ? 'E' : 'W';
+  return `${Math.abs(lat).toFixed(4)}° ${ns}, ${Math.abs(lng).toFixed(4)}° ${ew}`;
+}
+function escapeHtml(s) { return String(s||'').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+/* ─── NAVIGATION ─── */
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  closeMarkerSheet();
+  if (id === 's-main')           loadAndRenderTimeline();
+  if (id === 's-notes')          loadAndRenderNotes();
+  if (id === 's-audio')          prepareAudioScreen();
+  if (id === 's-planned')        prepareplannedScreen();
+  if (id === 's-settings')       prepareSettingsScreen();
+}
+
+/* ─── AUTH UI ─── */
+function showLoginScreen() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-login').classList.add('active');
+  document.getElementById('auth-msg').textContent = '';
+  document.getElementById('auth-msg').className = 'login-msg';
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  setAuthMode('login');
+}
+function setAuthMode(mode) {
+  authMode = mode;
+  const isSignup = mode === 'signup';
+  document.getElementById('login-heading').textContent = isSignup ? 'Konto erstellen' : 'Willkommen zurück';
+  document.getElementById('login-sub').innerHTML = isSignup
+    ? 'Lege ein Konto an, um deine<br>Marker sicher zu speichern.'
+    : 'Melde dich an, um deine Marker<br>zu öffnen.';
+  document.getElementById('auth-submit').textContent = isSignup ? 'Registrieren' : 'Einloggen';
+  document.getElementById('auth-password').autocomplete = isSignup ? 'new-password' : 'current-password';
+  document.getElementById('auth-toggle-row').innerHTML = isSignup
+    ? 'Schon registriert?<span class="toggle-link" onclick="toggleAuthMode()">Einloggen</span>'
+    : 'Noch kein Konto?<span class="toggle-link" onclick="toggleAuthMode()">Registrieren</span>';
+  document.getElementById('auth-msg').textContent = '';
+  document.getElementById('auth-msg').className = 'login-msg';
+}
+const toggleAuthMode = () => setAuthMode(authMode === 'login' ? 'signup' : 'login');
+
+async function submitAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const msg = document.getElementById('auth-msg');
+  const btn = document.getElementById('auth-submit');
+  msg.className = 'login-msg'; msg.textContent = '';
+  if (!email || !password) { msg.className='login-msg err'; msg.textContent='E-Mail und Passwort sind erforderlich.'; return; }
+  if (authMode === 'signup' && password.length < 6) { msg.className='login-msg err'; msg.textContent='Passwort muss mindestens 6 Zeichen haben.'; return; }
+  btn.disabled = true; btn.textContent = authMode === 'signup' ? 'Registriere…' : 'Logge ein…';
+  try {
+    const data = authMode === 'signup' ? await signUp(email, password) : await signIn(email, password);
+    if (data.access_token) { await saveSession(data); await enterApp(); }
+    else { msg.className='login-msg ok'; msg.innerHTML='Konto erstellt. Prüfe deine E-Mails,<br>um die Adresse zu bestätigen.'; setAuthMode('login'); }
+  } catch(e) { msg.className='login-msg err'; msg.textContent = String(e.message || e).slice(0,140); }
+  finally { btn.disabled = false; btn.textContent = authMode === 'signup' ? 'Registrieren' : 'Einloggen'; }
+}
+
+async function enterApp() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-main').classList.add('active');
+  renderWeek();
+  updateDateLabel();
+  loadAndRenderTimeline();
+  loadWeekSummary();
+}
+
+function confirmLogout() {
+  const e = AUTH.user && AUTH.user.email ? `\n\n(${AUTH.user.email})` : '';
+  if (confirm('Möchtest du dich abmelden?' + e)) signOut().then(()=>{ userSettings=null; showLoginScreen(); });
+}
+
+/* ─── WEEK ─── */
+function renderWeek() {
+  const w = document.getElementById('main-week');
+  w.innerHTML = '';
+  const todayIdx = todayDow();
+  // Konzept v2: pro Tag bis zu drei Dots fuer Audio, Kompression, Geplant.
+  // Anker bleibt bewusst aussen vor, weil er haeufig vorkommt.
+  const dotTypes = ['audio','compression','planned'];
+  DAYS.forEach((d,i) => {
+    const date = dateForDay(i);
+    const iso = isoDate(date);
+    const markersOnDay = weekSummary[iso] || [];
+    // v5: pro Typ einen Dot, Farbe aus erstem Marker dieses Typs (Fallback: Typ-Farbe).
+    const dotsHtml = dotTypes
+      .map(t => {
+        const first = markersOnDay.find(m => m.type === t);
+        if (!first) return '';
+        const col = first.color ? escapeHtml(first.color) : `var(--mt-${t})`;
+        return `<span class="wdot" style="background:${col}"></span>`;
+      })
+      .join('');
+    const col = document.createElement('div');
+    col.className = 'wday';
+    col.innerHTML = `<span class="wday-name">${d}</span>
+      <span class="wday-num ${i===todayIdx?'today':''} ${i===selectedDay && i!==todayIdx?'selected':''}">${date.getDate()}</span>
+      <div class="wday-dots">${dotsHtml}</div>`;
+    col.onclick = () => { selectedDay = i; renderWeek(); updateDateLabel(); loadAndRenderTimeline(); };
+    w.appendChild(col);
+  });
+}
+async function loadWeekSummary() {
+  try {
+    const monday = mondayOfWeek();
+    const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate()+6);
+    const start = isoDate(monday);
+    const end = isoDate(sunday);
+    const rows = await sb(`markers?marker_date=gte.${start}&marker_date=lte.${end}&select=marker_date,marker_type,color`);
+    const next = {};
+    rows.forEach(r => {
+      if (!next[r.marker_date]) next[r.marker_date] = [];
+      next[r.marker_date].push({ type: r.marker_type, color: r.color || null });
+    });
+    weekSummary = next;
+  } catch(e) { weekSummary = {}; }
+  renderWeek();
+}
+function updateDateLabel() {
+  const d = dateForDay(selectedDay);
+  document.getElementById('main-date-label').innerHTML = `${d.getDate()}. ${MONTHS[d.getMonth()]} <span>${d.getFullYear()}</span>`;
+}
+
+/* ─── TIMELINE ─── */
+async function loadAndRenderTimeline() {
+  const scroll = document.getElementById('tl-scroll');
+  scroll.innerHTML = '<div class="tl-empty">Lädt…</div>';
+  try {
+    dayMarkers = await fetchMarkers(isoDate(dateForDay(selectedDay)));
+    renderTimeline();
+  } catch(e) {
+    scroll.innerHTML = `<div class="tl-empty">Verbindung fehlgeschlagen.<br><small>${String(e).slice(0,120)}</small></div>`;
+  }
+}
+
+function renderTimeline() {
+  const scroll = document.getElementById('tl-scroll');
+  scroll.innerHTML = '';
+  if (!dayMarkers.length) {
+    scroll.innerHTML = `<div class="tl-empty">Noch kein Marker an diesem Tag.<br><small>Setze einen über das Plus-Symbol.</small></div>`;
+    return;
+  }
+  const nowHM = nowTimeStr();
+  dayMarkers.forEach(m => {
+    scroll.appendChild(renderMarkerCard(m, nowHM));
+  });
+}
+
+function renderMarkerCard(m, nowHM) {
+  const el = document.createElement('div');
+  el.className = 'timeline-item';
+  if (m.marker_type === 'planned' && m.is_done) el.classList.add('done');
+
+  const typeLabels = { anchor:'Anker', audio:'Audiomarker', compression:'Kompression', planned:'Geplant' };
+  const typeLabel = typeLabels[m.marker_type] || 'Marker';
+
+  const bubbleIcons = {
+    anchor:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="6"/></svg>',
+    audio:       '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="4" y1="12" x2="4" y2="12"/><line x1="8" y1="9" x2="8" y2="15"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="16" y1="9" x2="16" y2="15"/><line x1="20" y1="12" x2="20" y2="12"/></svg>',
+    compression: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M6 8 L12 12 L6 16"/><path d="M18 8 L12 12 L18 16"/></svg>',
+    planned:     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>'
+  };
+  const bubbleIcon = bubbleIcons[m.marker_type] || '';
+
+  // v3: Anker hat bewusst keinen Text neben dem roten Kreis.
+  let bodyHtml = '';
+  if (m.marker_type !== 'anchor') {
+    bodyHtml = `<small>${typeLabel}</small>`;
+    if (m.marker_type === 'audio') {
+      bodyHtml += `<strong>Audiomarker</strong>`;
+      const display = m.summary || m.transcript || 'Inhalt liegt in der verknüpften Notiz';
+      bodyHtml += `<p>${escapeHtml(display)}</p>`;
+      const tagsHtml = (m.tags || []).map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('');
+      if (tagsHtml) bodyHtml += `<div class="item-tags">${tagsHtml}</div>`;
+    } else if (m.marker_type === 'compression') {
+      bodyHtml += `<strong>Kompression</strong>`;
+      bodyHtml += `<p>${escapeHtml(m.sub || 'körperlicher Eingriff am Armreif')}</p>`;
+    } else if (m.marker_type === 'planned') {
+      bodyHtml += `<strong>${escapeHtml(m.title || 'Ohne Titel')}</strong>`;
+    }
+  }
+
+  let passed = false;
+  if (m.marker_type === 'planned') {
+    passed = fmtTime(m.start_time) <= nowHM && isoDate(dateForDay(selectedDay)) <= isoDate(new Date());
+  }
+  const bubbleClass = 'bubble ' + m.marker_type + (passed ? ' passed' : '');
+  // v4: planned nutzt die gespeicherte Farbe als Bubble-Background
+  const bubbleStyle = (m.marker_type === 'planned' && m.color) ? ` style="background:${escapeHtml(m.color)}"` : '';
+
+  // v4: Anker bekommt einen Hover-Tooltip mit Zeit, Ort und ggf. Erledigt-Hinweis
+  if (m.marker_type === 'anchor') {
+    const parts = [fmtTime(m.start_time)];
+    if (m.latitude != null && m.longitude != null) parts.push(m.location_label || fmtCoord(m.latitude, m.longitude));
+    if (m.sub) parts.push(m.sub);
+    el.setAttribute('title', parts.join(' · '));
+  }
+
+  let checkHtml = '<button class="check-btn hidden"></button>';
+  if (m.marker_type === 'planned') {
+    const checkIcon = m.is_done
+      ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '';
+    // v4: Check-Button-Farbe folgt der gewaehlten Marker-Farbe
+    const cstyle = m.color ? ` style="border-color:${escapeHtml(m.color)};${m.is_done?`background:${escapeHtml(m.color)};`:''}"` : '';
+    checkHtml = `<button class="check-btn ${m.is_done?'done':''}"${cstyle}>${checkIcon}</button>`;
+  }
+
+  el.innerHTML = `
+    <div class="time">${fmtTime(m.start_time)}</div>
+    <div class="track"><div class="${bubbleClass}"${bubbleStyle}>${bubbleIcon}</div></div>
+    <div class="item-content">${bodyHtml}</div>
+    ${checkHtml}`;
+
+  el.querySelector('.item-content').onclick = () => openMarkerDetail(m);
+  el.querySelector('.track').onclick = () => openMarkerDetail(m);
+  if (m.marker_type === 'planned') {
+    el.querySelector('.check-btn').onclick = (ev) => { ev.stopPropagation(); togglePlannedDone(m); };
+  }
+
+  return el;
+}
+
+async function togglePlannedDone(m) {
+  const newVal = !m.is_done;
+  m.is_done = newVal;
+  renderTimeline();
+  try { await patchMarker(m.id, {is_done:newVal}); }
+  catch(e) { m.is_done = !newVal; renderTimeline(); }
+}
+
+/* ─── MARKER-SHEET ─── */
+function openMarkerSheet() { document.getElementById('marker-sheet').classList.add('open'); }
+function closeMarkerSheet() { document.getElementById('marker-sheet').classList.remove('open'); }
+
+/* ─── ANKER ─── */
+async function createAnchor() {
+  closeMarkerSheet();
+  try {
+    const settings = await ensureSettings();
+    let lat = null, lng = null;
+    if (settings.geo_enabled) {
+      const pos = await getCurrentPosition();
+      if (pos) { lat = pos.latitude; lng = pos.longitude; }
+    }
+    await insertMarker({
+      marker_date: isoDate(dateForDay(selectedDay)),
+      start_time: nowTimeStr(),
+      marker_type: 'anchor',
+      latitude: lat,
+      longitude: lng,
+      icon: 'list',
+      color: '#c4bca8',
+      source: 'app'
+    });
+    await loadAndRenderTimeline();
+    loadWeekSummary();
+  } catch(e) { alert('Anker konnte nicht gesetzt werden.\n' + String(e).slice(0,140)); }
+}
+
+/* ─── KOMPRESSION (Simulation, bis Ring angebunden ist) ─── */
+async function createCompression() {
+  closeMarkerSheet();
+  try {
+    await insertMarker({
+      marker_date: isoDate(dateForDay(selectedDay)),
+      start_time: nowTimeStr(),
+      marker_type: 'compression',
+      sub: 'manuell protokolliert',
+      icon: 'list',
+      color: '#c08a7a',
+      source: 'app'
+    });
+    await loadAndRenderTimeline();
+    loadWeekSummary();
+  } catch(e) { alert('Kompression konnte nicht protokolliert werden.\n' + String(e).slice(0,140)); }
+}
+
+/* ─── AUDIO-AUFNAHME ─── */
+let mediaRecorder = null;
+let recChunks = [];
+let recStartTs = 0;
+let recTimerId = null;
+let recAudioCtx = null;
+let recAnalyser = null;
+let recRafId = null;
+let recordedBlob = null;
+let recordedExt = 'webm';
+let lastDurationMs = 0;
+
+function pickMimeType() {
+  if (!window.MediaRecorder) return '';
+  const candidates = ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
+  for (const t of candidates) if (MediaRecorder.isTypeSupported(t)) return t;
+  return '';
+}
+function formatDuration(secs) {
+  const m = Math.floor(secs/60), s = secs%60;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function prepareAudioScreen() {
+  document.getElementById('audio-transcript').value = '';
+  document.getElementById('audio-time').value = nowTimeStr();
+  document.getElementById('audio-save').disabled = true;
+  recordedBlob = null;
+  document.getElementById('audio-player').style.display = 'none';
+  resetRecorderUi();
+}
+
+function resetRecorderUi() {
+  const btn = document.getElementById('rec-btn');
+  const icon = document.getElementById('rec-icon');
+  const status = document.getElementById('rec-status');
+  const time = document.getElementById('rec-time');
+  const meter = document.getElementById('rec-meter');
+  btn.classList.remove('recording'); btn.classList.add('idle');
+  icon.innerHTML = '<circle cx="12" cy="12" r="6"/>';
+  status.classList.remove('recording');
+  status.textContent = recordedBlob ? 'Aufnahme bereit. Speichern oder neu aufnehmen.' : 'Tippe auf den Kreis, um die Aufnahme zu starten';
+  time.classList.remove('recording');
+  time.textContent = recordedBlob ? formatDuration(Math.round(lastDurationMs/1000)) : '00:00';
+  meter.innerHTML = '';
+}
+
+async function toggleRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
+  else await startRecording();
+}
+
+async function startRecording() {
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    document.getElementById('rec-status').textContent = 'Mikrofon-Zugriff verweigert. Du kannst stattdessen ein Transkript schreiben.';
+    return;
+  }
+  const mime = pickMimeType();
+  recordedExt = mime.includes('mp4') ? 'm4a' : (mime.includes('ogg') ? 'ogg' : 'webm');
+  try {
+    mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+  } catch(e) {
+    mediaRecorder = new MediaRecorder(stream);
+  }
+  recChunks = [];
+  mediaRecorder.ondataavailable = ev => { if (ev.data && ev.data.size > 0) recChunks.push(ev.data); };
+  mediaRecorder.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    if (recAudioCtx) { try { recAudioCtx.close(); } catch(e) {} recAudioCtx = null; }
+    if (recRafId) { cancelAnimationFrame(recRafId); recRafId = null; }
+    if (recTimerId) { clearInterval(recTimerId); recTimerId = null; }
+    lastDurationMs = Date.now() - recStartTs;
+    const blob = new Blob(recChunks, { type: mediaRecorder.mimeType || mime || 'audio/webm' });
+    recordedBlob = blob;
+    const audio = document.getElementById('audio-preview');
+    audio.src = URL.createObjectURL(blob);
+    document.getElementById('audio-player').style.display = 'block';
+    resetRecorderUi();
+    document.getElementById('audio-save').disabled = false;
+  };
+
+  const btn = document.getElementById('rec-btn');
+  const icon = document.getElementById('rec-icon');
+  const status = document.getElementById('rec-status');
+  const time = document.getElementById('rec-time');
+  btn.classList.remove('idle'); btn.classList.add('recording');
+  icon.innerHTML = '<rect x="7" y="7" width="10" height="10" rx="1.5"/>';
+  status.classList.add('recording'); status.textContent = 'Aufnahme läuft. Tippe auf den Kreis, um zu stoppen.';
+  time.classList.add('recording');
+
+  recStartTs = Date.now();
+  recTimerId = setInterval(() => {
+    const secs = Math.floor((Date.now() - recStartTs)/1000);
+    time.textContent = formatDuration(secs);
+    if (secs >= 300) stopRecording();
+  }, 250);
+
+  try {
+    recAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = recAudioCtx.createMediaStreamSource(stream);
+    recAnalyser = recAudioCtx.createAnalyser();
+    recAnalyser.fftSize = 64;
+    src.connect(recAnalyser);
+    drawMeter();
+  } catch(e) {}
+
+  mediaRecorder.start();
+}
+
+function drawMeter() {
+  const meter = document.getElementById('rec-meter');
+  const bars = 12;
+  if (!meter.children.length) {
+    for (let i=0; i<bars; i++) {
+      const b = document.createElement('span'); b.style.height = '4px'; meter.appendChild(b);
+    }
+  }
+  const data = new Uint8Array(recAnalyser.frequencyBinCount);
+  const tick = () => {
+    if (!recAnalyser) return;
+    recAnalyser.getByteFrequencyData(data);
+    for (let i=0; i<bars; i++) {
+      const v = data[Math.floor(i * data.length / bars)] / 255;
+      meter.children[i].style.height = `${4 + v * 20}px`;
+    }
+    recRafId = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+}
+
+function discardRecording() {
+  recordedBlob = null;
+  document.getElementById('audio-player').style.display = 'none';
+  document.getElementById('audio-save').disabled = !document.getElementById('audio-transcript').value.trim();
+  resetRecorderUi();
+}
+
+function rerecord() {
+  recordedBlob = null;
+  document.getElementById('audio-player').style.display = 'none';
+  startRecording();
+}
+
+function cancelAudioRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording();
+  recordedBlob = null;
+  goTo('s-main');
+}
+
+function onAudioInput() {
+  const val = document.getElementById('audio-transcript').value.trim();
+  document.getElementById('audio-save').disabled = !(val.length > 0 || recordedBlob);
+}
+
+async function saveAudioMarker() {
+  const transcript = document.getElementById('audio-transcript').value.trim();
+  const time = document.getElementById('audio-time').value || nowTimeStr();
+  const btn = document.getElementById('audio-save');
+  btn.disabled = true; btn.textContent = 'Speichert…';
+  try {
+    const created = await insertMarker({
+      marker_date: isoDate(dateForDay(selectedDay)),
+      start_time: time,
+      marker_type: 'audio',
+      transcript: transcript || null,
+      icon: 'mail',
+      color: '#b89668',
+      source: 'app'
+    });
+    if (recordedBlob) {
+      try {
+        const path = await uploadAudio(recordedBlob, created.id, recordedExt);
+        await patchMarker(created.id, { audio_path: path });
+      } catch(e) {
+        console.warn('Audio-Upload fehlgeschlagen:', e);
+        alert('Marker gespeichert, aber Audio-Upload fehlgeschlagen.\n' + String(e).slice(0,140));
+      }
+    }
+    // Konzept v2: Audiomarker erzeugt automatisch eine verknuepfte Notiz.
+    // Transkript ist vorgefuellt, falls manuell eingegeben. AURA schreibt es
+    // sonst spaeter in diese Notiz.
+    try {
+      const note = await insertNote({
+        title: null,
+        content: transcript || '',
+        tags: [],
+        marker_id: created.id
+      });
+      if (note && Array.isArray(allNotes)) allNotes.unshift(note);
+    } catch(e) {
+      console.warn('Verknüpfte Notiz konnte nicht angelegt werden:', e);
+    }
+    recordedBlob = null;
+    goTo('s-main');
+    loadWeekSummary();
+  } catch(e) {
+    alert('Audiomarker konnte nicht gespeichert werden.\n' + String(e).slice(0,140));
+    btn.disabled = false; btn.textContent = 'Speichern';
+  }
+}
+
+/* ─── GEPLANTER MARKER ─── */
+function prepareplannedScreen() {
+  document.getElementById('planned-title').value = '';
+  document.getElementById('planned-time').value = '';
+  document.getElementById('planned-save').disabled = true;
+  document.getElementById('planned-repeat').value = 'none';
+  // v4: Farbauswahl zuruecksetzen (erster Button aktiv)
+  const colorButtons = document.querySelectorAll('#planned-colors button');
+  colorButtons.forEach((b, i) => b.classList.toggle('active', i === 0));
+  colorButtons.forEach(b => {
+    b.onclick = () => {
+      colorButtons.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+    };
+  });
+  ensureSettings().then(s => {
+    document.getElementById('planned-settings-hint').textContent = `Druckaufbau ${s.compression_seconds}s am Armreif.`;
+  }).catch(()=>{});
+}
+function onPlannedInput() {
+  const title = document.getElementById('planned-title').value.trim();
+  const time = document.getElementById('planned-time').value;
+  document.getElementById('planned-save').disabled = !(title && time);
+}
+
+// v4: Generiert die Daten, an denen ein wiederkehrender geplanter Marker angelegt wird.
+function computePlannedDates(baseDate, repeat) {
+  const mondayOf = (d) => {
+    const offset = (d.getDay() + 6) % 7;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() - offset);
+  };
+  if (repeat === 'weekdays') {
+    const mo = mondayOf(baseDate);
+    return [0,1,2,3,4].map(i => new Date(mo.getFullYear(), mo.getMonth(), mo.getDate()+i));
+  }
+  if (repeat === 'daily') {
+    const mo = mondayOf(baseDate);
+    return [0,1,2,3,4,5,6].map(i => new Date(mo.getFullYear(), mo.getMonth(), mo.getDate()+i));
+  }
+  if (repeat === 'weekly') {
+    return [0,1,2,3].map(i => new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate() + 7*i));
+  }
+  return [baseDate];
+}
+
+async function savePlannedMarker() {
+  const title = document.getElementById('planned-title').value.trim();
+  const time = document.getElementById('planned-time').value;
+  const repeat = document.getElementById('planned-repeat').value;
+  const activeColor = document.querySelector('#planned-colors button.active');
+  const color = activeColor ? activeColor.dataset.color : '#b5c5d5';
+  const btn = document.getElementById('planned-save');
+  btn.disabled = true; btn.textContent = 'Speichert…';
+  try {
+    const dates = computePlannedDates(dateForDay(selectedDay), repeat);
+    for (const d of dates) {
+      await insertMarker({
+        marker_date: isoDate(d),
+        start_time: time,
+        title: title,
+        marker_type: 'planned',
+        icon: 'alarm',
+        color: color,
+        source: 'app'
+      });
+    }
+    goTo('s-main');
+    loadWeekSummary();
+  } catch(e) {
+    alert('Geplanter Marker konnte nicht gespeichert werden.\n' + String(e).slice(0,140));
+    btn.disabled = false; btn.textContent = 'Speichern';
+  }
+}
+
+/* ─── MARKER-DETAIL ─── */
+async function openMarkerDetail(m) {
+  currentDetailMarker = m;
+  goTo('s-marker-detail');
+  await renderMarkerDetail(m);
+}
+
+function closeMarkerDetail() {
+  currentDetailMarker = null;
+  goTo('s-main');
+}
+
+async function renderMarkerDetail(m) {
+  const body = document.getElementById('det-body');
+  const actions = document.getElementById('det-actions');
+  const noteBtn = document.getElementById('det-note-btn');
+
+  const typeMeta = {
+    anchor:      { color: 'var(--mt-anchor)',      label: 'Anker' },
+    audio:       { color: 'var(--mt-audio)',       label: 'Audiomarker' },
+    compression: { color: 'var(--mt-compression)', label: 'Kompression' },
+    planned:     { color: 'var(--mt-planned)',     label: 'Geplanter Marker' }
+  }[m.marker_type] || { color: 'var(--text-tertiary)', label: m.marker_type };
+
+  const dateLabel = relativeDate(m.marker_date + 'T' + (m.start_time || '00:00:00'));
+  let html = `
+    <span class="det-type-badge"><span class="dot" style="background:${typeMeta.color}"></span>${typeMeta.label}</span>
+    <div class="det-time">${fmtTime(m.start_time)}</div>
+    <div class="det-date">${dateLabel} · ${m.marker_date}</div>
+  `;
+
+  if (m.marker_type === 'anchor') {
+    html += `<div class="det-section">
+      <div class="det-label">Ort</div>`;
+    if (m.latitude != null && m.longitude != null) {
+      html += `<span class="det-loc">${m.location_label ? escapeHtml(m.location_label) : fmtCoord(m.latitude, m.longitude)}</span>`;
+    } else {
+      html += `<div class="det-text muted">Kein Ort gespeichert.</div>`;
+    }
+    html += `</div>`;
+
+    // v4: wenn der Anker bereits einen geplanten Marker erledigt hat
+    if (m.sub && m.sub.indexOf('erledigt:') === 0) {
+      html += `<div class="det-section">
+        <div class="det-label">Hat erledigt</div>
+        <div class="det-text">${escapeHtml(m.sub.replace(/^erledigt:\s*/,''))}</div>
+      </div>`;
+    } else {
+      // Liste offene planned-Marker des Tages, Platzhalter, wird per JS befuellt
+      html += `<div class="det-section">
+        <div class="det-label">Hat das hier erledigt?</div>
+        <div id="anchor-fulfill-list"><div class="det-text muted">Keine offenen geplanten Marker an diesem Tag.</div></div>
+      </div>`;
+    }
+
+    html += `<div class="det-section">
+      <div class="det-label">Hinweis</div>
+      <div class="det-text muted">Ein Anker hält nur den Moment fest. Bedeutung kommt später, wenn du eine Notiz daran knüpfst.</div>
+    </div>`;
+  }
+  else if (m.marker_type === 'audio') {
+    if (m.audio_path) {
+      html += `<div class="det-section">
+        <div class="det-label">Aufnahme</div>
+        <div id="det-audio-slot"><div class="det-pending">Lade Audio…</div></div>
+      </div>`;
+    } else {
+      html += `<div class="det-section">
+        <div class="det-label">Aufnahme</div>
+        <div class="det-pending">Keine Aufnahme. Wenn der Armreif sie noch nicht synchronisiert hat, erscheint sie hier später.</div>
+      </div>`;
+    }
+    html += `<div class="det-section">
+      <div class="det-label">Inhalt</div>
+      <div class="det-text muted">Transkript und Gedanken liegen in der verknüpften Notiz. Über den Button oben rechts öffnest du sie.</div>
+    </div>`;
+    if (m.transcript) {
+      html += `<div class="det-section">
+        <div class="det-label">Transkript (Vorschau)</div>
+        <div class="det-text">${escapeHtml(m.transcript)}</div>
+      </div>`;
+    } else {
+      html += `<div class="det-section">
+        <div class="det-label">Transkript</div>
+        <div class="det-pending">Wird automatisch in die Notiz geschrieben, sobald AURA es transkribiert hat.</div>
+      </div>`;
+    }
+  }
+  else if (m.marker_type === 'compression') {
+    html += `<div class="det-section">
+      <div class="det-label">Auslöser</div>
+      <div class="det-text">${escapeHtml(m.sub || 'körperlicher Eingriff am Armreif')}</div>
+    </div>
+    <div class="det-section">
+      <div class="det-label">Hinweis</div>
+      <div class="det-text muted">Kompressionen werden als reines Ereignis protokolliert. Sie tragen keinen Inhalt im Moment, können aber später kommentiert werden.</div>
+    </div>`;
+  }
+  else if (m.marker_type === 'planned') {
+    html += `<div class="det-section">
+      <div class="det-label">Titel</div>
+      <div class="det-text">${escapeHtml(m.title || 'Ohne Titel')}</div>
+    </div>
+    <div class="det-section">
+      <div class="det-label">Status</div>
+      <div class="det-text">${m.is_done ? 'Erledigt' : 'Offen'}</div>
+    </div>`;
+  }
+
+  body.innerHTML = html;
+
+  if (m.marker_type === 'audio' && m.audio_path) {
+    getAudioUrl(m.audio_path).then(url => {
+      const slot = document.getElementById('det-audio-slot');
+      if (!slot) return;
+      if (url) slot.innerHTML = `<audio controls src="${url}" style="width:100%"></audio>`;
+      else slot.innerHTML = `<div class="det-pending">Audio konnte nicht geladen werden.</div>`;
+    });
+  }
+
+  // v4: Befuelle Fulfill-Liste im Anker-Detail
+  if (m.marker_type === 'anchor') {
+    const listEl = document.getElementById('anchor-fulfill-list');
+    if (listEl) {
+      const openPlanned = (dayMarkers || []).filter(x => x.marker_type === 'planned' && !x.is_done);
+      if (openPlanned.length) {
+        listEl.innerHTML = openPlanned.map(p => {
+          const title = escapeHtml(p.title || 'Ohne Titel');
+          return `<button class="det-fulfill-btn" data-planned-id="${p.id}" onclick="fulfillPlannedFromAnchor('${m.id}','${p.id}')">${title}<span class="fb-time">Geplant · ${fmtTime(p.start_time)}</span></button>`;
+        }).join('');
+      }
+    }
+  }
+
+  let actionsHtml = '';
+  if (m.marker_type === 'planned') {
+    actionsHtml += `<button class="det-btn ${m.is_done?'ghost':'primary'}" onclick="toggleDetailDone()">${m.is_done?'Als offen markieren':'Erledigt markieren'}</button>`;
+  }
+  actionsHtml += `<button class="det-btn danger" onclick="deleteDetailMarker()">Marker löschen</button>`;
+  actions.innerHTML = actionsHtml;
+
+  const linked = await findLinkedNote(m.id);
+  noteBtn.textContent = linked ? 'Notiz öffnen' : 'Notiz anlegen';
+}
+
+async function findLinkedNote(markerId) {
+  if (!allNotes.length) {
+    try { allNotes = await fetchNotes(); } catch(e) { return null; }
+  }
+  return allNotes.find(n => n.marker_id === markerId) || null;
+}
+
+async function openLinkedNote() {
+  if (!currentDetailMarker) return;
+  const linked = await findLinkedNote(currentDetailMarker.id);
+  if (linked) openNoteEdit(linked);
+  else openNewNote({ marker: currentDetailMarker });
+}
+
+async function toggleDetailDone() {
+  if (!currentDetailMarker) return;
+  const newVal = !currentDetailMarker.is_done;
+  try {
+    await patchMarker(currentDetailMarker.id, { is_done: newVal });
+    currentDetailMarker.is_done = newVal;
+    renderMarkerDetail(currentDetailMarker);
+  } catch(e) { alert('Status konnte nicht geändert werden.'); }
+}
+
+async function deleteDetailMarker() {
+  if (!currentDetailMarker) return;
+  if (!confirm('Marker wirklich löschen? Die verknüpfte Notiz bleibt erhalten.')) return;
+  try {
+    await deleteMarker(currentDetailMarker.id);
+    closeMarkerDetail();
+  } catch(e) { alert('Löschen fehlgeschlagen.'); }
+}
+
+// v4: Markiert einen geplanten Marker als erledigt durch einen Anker.
+async function fulfillPlannedFromAnchor(anchorId, plannedId) {
+  const planned = (dayMarkers || []).find(x => x.id === plannedId);
+  if (!planned) { alert('Geplanter Marker nicht gefunden.'); return; }
+  const title = planned.title || 'Ohne Titel';
+  try {
+    await patchMarker(plannedId, { is_done: true });
+    await patchMarker(anchorId, { sub: 'erledigt: ' + title });
+    await loadAndRenderTimeline();
+    loadWeekSummary();
+    const updated = (dayMarkers || []).find(x => x.id === anchorId);
+    if (updated) {
+      currentDetailMarker = updated;
+      renderMarkerDetail(updated);
+    } else {
+      closeMarkerDetail();
+    }
+  } catch(e) {
+    alert('Konnte nicht verknüpfen.\n' + String(e).slice(0,140));
+  }
+}
+
+/* ─── NOTIZEN ─── */
+async function loadAndRenderNotes() {
+  const scroll = document.getElementById('notes-scroll');
+  scroll.innerHTML = '<div class="notes-empty">Lädt…</div>';
+  try {
+    allNotes = await fetchNotes();
+    renderNotes();
+  } catch(e) {
+    scroll.innerHTML = `<div class="notes-empty">Verbindung fehlgeschlagen.<br><small>${String(e).slice(0,120)}</small></div>`;
+  }
+}
+function renderNotes() {
+  const scroll = document.getElementById('notes-scroll');
+  scroll.innerHTML = '';
+  if (!allNotes.length) {
+    scroll.innerHTML = `<div class="notes-empty">Noch keine Notizen.<br><small>Notizen sind die zweite Ebene. Marker halten den Moment, Notizen tragen seine Bedeutung.</small></div>`;
+    return;
+  }
+  allNotes.forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    const hasTitle = n.title && n.title.trim();
+    const tagsHtml = (n.tags || []).map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('');
+    card.innerHTML = `
+      <div class="note-meta">
+        <span>${relativeDate(n.updated_at || n.created_at)}</span>
+        ${n.marker_id ? '<span class="note-linked">verknüpft</span>' : ''}
+      </div>
+      <div class="note-title ${hasTitle?'':'untitled'}">${hasTitle ? escapeHtml(n.title) : 'Ohne Titel'}</div>
+      ${n.content ? `<div class="note-content">${escapeHtml(n.content)}</div>` : ''}
+      ${tagsHtml ? `<div class="note-tags">${tagsHtml}</div>` : ''}`;
+    card.onclick = () => openNoteEdit(n);
+    scroll.appendChild(card);
+  });
+}
+
+let currentTags = [];
+let currentMarkerLink = null;
+
+function openNewNote(ctx) {
+  editingNote = null;
+  currentTags = [];
+  currentMarkerLink = (ctx && ctx.marker) ? ctx.marker : null;
+  document.getElementById('note-title').value = '';
+  const start = currentMarkerLink && (currentMarkerLink.summary || currentMarkerLink.transcript) ? (currentMarkerLink.summary || currentMarkerLink.transcript) : '';
+  document.getElementById('note-content').value = start;
+  document.getElementById('note-delete-btn').style.display = 'none';
+  if (currentMarkerLink && currentMarkerLink.tags && currentMarkerLink.tags.length) currentTags = [...currentMarkerLink.tags];
+  updateLinkedBanner();
+  renderTagChips();
+  goTo('s-note-edit');
+  setTimeout(()=>document.getElementById('note-content').focus(), 100);
+}
+function openNoteEdit(n) {
+  editingNote = n;
+  currentTags = [...(n.tags || [])];
+  currentMarkerLink = null;
+  document.getElementById('note-title').value = n.title || '';
+  document.getElementById('note-content').value = n.content || '';
+  document.getElementById('note-delete-btn').style.display = 'block';
+  updateLinkedBanner();
+  renderTagChips();
+  goTo('s-note-edit');
+}
+function closeNoteEdit() {
+  editingNote = null; currentTags = []; currentMarkerLink = null;
+  goTo('s-notes');
+}
+function updateLinkedBanner() {
+  const banner = document.getElementById('note-linked-banner');
+  const linkedMarkerId = currentMarkerLink ? currentMarkerLink.id : (editingNote && editingNote.marker_id);
+  if (linkedMarkerId) {
+    banner.style.display = 'block';
+    const t = currentMarkerLink ? fmtTime(currentMarkerLink.start_time) : '';
+    banner.textContent = `Verknüpft mit ${currentMarkerLink ? (currentMarkerLink.marker_type === 'audio' ? 'Audiomarker' : 'Marker') : 'Marker'}${t?(' '+t):''}`;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+function renderTagChips() {
+  const row = document.getElementById('note-tags-row');
+  row.querySelectorAll('.tag-chip').forEach(n => n.remove());
+  const input = document.getElementById('note-tag-input');
+  currentTags.forEach((t, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.innerHTML = `${escapeHtml(t)}<span class="remove" data-i="${i}">×</span>`;
+    chip.querySelector('.remove').onclick = () => { currentTags.splice(i,1); renderTagChips(); };
+    row.insertBefore(chip, input);
+  });
+}
+function addTagFromInput() {
+  const input = document.getElementById('note-tag-input');
+  const v = input.value.trim().toLowerCase();
+  if (v && !currentTags.includes(v)) { currentTags.push(v); renderTagChips(); }
+  input.value = '';
+}
+
+async function saveNote() {
+  addTagFromInput();
+  const title = document.getElementById('note-title').value.trim();
+  const content = document.getElementById('note-content').value;
+  const btn = document.getElementById('note-save');
+  btn.disabled = true; btn.textContent = 'Speichert…';
+  try {
+    if (editingNote) {
+      await patchNote(editingNote.id, { title: title || null, content, tags: currentTags });
+    } else {
+      await insertNote({
+        title: title || null,
+        content,
+        tags: currentTags,
+        marker_id: currentMarkerLink ? currentMarkerLink.id : null
+      });
+    }
+    closeNoteEdit();
+    loadAndRenderNotes();
+  } catch(e) {
+    alert('Notiz konnte nicht gespeichert werden.\n' + String(e).slice(0,140));
+    btn.disabled = false; btn.textContent = 'Speichern';
+  }
+}
+
+async function deleteNote() {
+  if (!editingNote) return;
+  if (!confirm('Notiz wirklich löschen?')) return;
+  try {
+    await deleteNoteById(editingNote.id);
+    closeNoteEdit();
+    loadAndRenderNotes();
+  } catch(e) { alert('Löschen fehlgeschlagen.\n' + String(e).slice(0,140)); }
+}
+
+/* ─── EINSTELLUNGEN ─── */
+async function ensureSettings() {
+  if (userSettings) return userSettings;
+  userSettings = await fetchSettings();
+  return userSettings;
+}
+
+async function prepareSettingsScreen() {
+  document.getElementById('set-account').textContent = AUTH.user && AUTH.user.email ? AUTH.user.email : '';
+  try {
+    const s = await ensureSettings();
+    document.getElementById('set-comp-slider').value = s.compression_seconds;
+    document.getElementById('set-comp-val').textContent = s.compression_seconds;
+    document.getElementById('set-repeat').value = s.repeat_interval_minutes ? String(s.repeat_interval_minutes) : '';
+    setToggleState('set-geo-toggle', !!s.geo_enabled);
+    document.getElementById('set-ring-label').textContent = s.ring_paired_id ? `Gekoppelt (${s.ring_paired_id})` : 'Nicht gekoppelt';
+    setToggleState('set-admin-toggle', isAdminMode());
+  } catch(e) {
+    console.warn('Settings konnten nicht geladen werden:', e);
+  }
+}
+
+function setToggleState(id, on) {
+  const el = document.getElementById(id);
+  if (on) el.classList.add('on'); else el.classList.remove('on');
+}
+
+let compSliderTimeout = null;
+function onCompSlider() {
+  const v = Number(document.getElementById('set-comp-slider').value);
+  document.getElementById('set-comp-val').textContent = v;
+  clearTimeout(compSliderTimeout);
+  compSliderTimeout = setTimeout(() => persistSetting({ compression_seconds: v }), 400);
+}
+function onRepeatChange() {
+  const v = document.getElementById('set-repeat').value;
+  persistSetting({ repeat_interval_minutes: v ? Number(v) : null });
+}
+function onGeoToggle() {
+  const cur = document.getElementById('set-geo-toggle').classList.contains('on');
+  const next = !cur;
+  setToggleState('set-geo-toggle', next);
+  persistSetting({ geo_enabled: next });
+}
+
+/* ─── ADMIN-MODUS (v5, lokal pro Geraet) ─── */
+const ADMIN_KEY = 'aurum_admin_mode';
+function isAdminMode() {
+  try {
+    const v = localStorage.getItem(ADMIN_KEY);
+    return v === null ? true : v === '1';
+  } catch(e) { return true; }
+}
+function applyAdminVisibility() {
+  if (isAdminMode()) document.body.classList.add('admin-mode');
+  else document.body.classList.remove('admin-mode');
+  const btn = document.getElementById('set-admin-toggle');
+  if (btn) setToggleState('set-admin-toggle', isAdminMode());
+}
+function onAdminToggle() {
+  const next = !isAdminMode();
+  try { localStorage.setItem(ADMIN_KEY, next ? '1' : '0'); } catch(e) {}
+  applyAdminVisibility();
+}
+
+/* ─── GERAETE-RESET (v5) ─── */
+async function resetDeviceState() {
+  if (!confirm('Diesen Vorgang wirklich ausfuehren?\n\nAURUM startet beim naechsten Oeffnen wie neu. Deine Daten in Supabase bleiben erhalten.')) return;
+  try {
+    await storage.del('aurum_session');
+    try { localStorage.removeItem(ADMIN_KEY); } catch(e) {}
+    // Vorbereitung fuer v6: Onboarding-Flag wird hier ebenfalls entfernt, sobald das Onboarding aktiv ist.
+    try { localStorage.removeItem('aurum_onboarded'); } catch(e) {}
+    AUTH = { access_token:null, refresh_token:null, user:null };
+    userSettings = null;
+  } catch(e) {}
+  location.reload();
+}
+
+async function persistSetting(ch) {
+  try {
+    await ensureSettings();
+    const updated = await patchSettings(ch);
+    if (updated && updated[0]) userSettings = updated[0];
+  } catch(e) { console.warn('Setting nicht gespeichert:', e); }
+}
+
+/* ─── INIT ─── */
+(async () => {
+  applyAdminVisibility();
+  if (await loadSession()) await enterApp();
+  else showLoginScreen();
+})();
+
+/* ─── SERVICE WORKER (v2: deaktiviert) ─── */
+// Damit der SW-Cache der v0.09 nicht die v2-Variante ueberschreibt oder umgekehrt,
+// registriert v2 keinen Service Worker. Falls schon einer registriert ist (z. B.
+// weil vorher die v0.09 geoeffnet war), melden wir ihn beim Laden ab.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister().catch(()=>{}));
+  }).catch(()=>{});
+}
+</script>
+
+
+</body></html>
