@@ -1,0 +1,2841 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf5eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AURUM">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="apple-touch-icon" href="./icon.svg">
+<title>AURUM</title>
+<style>
+:root{
+  --bg-ambient:#ebe3d3;
+  --bg-screen:#faf5eb;
+  --bg-card:#ffffff;
+  --bg-subtle:#f2ecdf;
+  --bg-nav:#f5efe2;
+  --bg-muted:#ece5d4;
+  --border-subtle:#e5ddcc;
+  --border-medium:#d6cdb8;
+  --text-primary:#2e2820;
+  --text-secondary:#7a7062;
+  --text-tertiary:#a89f8d;
+  --text-quaternary:#c4bca8;
+  --gold:#b89668;
+  --gold-dark:#9a7d52;
+  --gold-soft:#d4b88a;
+  --gold-pale:#ece0c6;
+  --phone-bezel:#3a3228;
+
+  --mt-anchor:#c4bca8;
+  --mt-audio:#b89668;
+  --mt-compression:#c08a7a;
+  --mt-planned:#b5c5d5;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg-screen);
+  font-family:system-ui,-apple-system,sans-serif;
+  color:var(--text-primary);
+  overflow-x:hidden;
+}
+/* v0.06: Vollbild, kein Phone-Bezel. iPhone-Notch ueber safe-area-inset. */
+.phone{
+  width:100%;
+  min-height:100vh;
+  background:var(--bg-screen);
+  padding-top:env(safe-area-inset-top,0);
+  padding-bottom:env(safe-area-inset-bottom,0);
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.notch-bar,.notch{display:none}
+
+/* v0.06: Admin-/Praesentationsmodus. Elemente mit .admin-only sind nur sichtbar,
+   wenn body die Klasse .admin-mode traegt (Default via JS: an). */
+body:not(.admin-mode) .admin-only{display:none !important}
+
+.screen{display:none;flex-direction:column;min-height:calc(100vh - env(safe-area-inset-top,0) - env(safe-area-inset-bottom,0));flex:1}
+.screen.active{display:flex}
+
+/* Login */
+#s-login{background:var(--bg-screen);color:var(--text-primary);padding:48px 28px 32px;justify-content:space-between}
+.login-brand{text-align:center;margin-top:20px}
+.login-logo{font-size:34px;font-weight:700;letter-spacing:10px;color:var(--gold);font-family:Georgia,'Times New Roman',serif}
+.login-tagline{font-size:12px;color:var(--text-secondary);margin-top:10px;letter-spacing:2px;text-transform:uppercase}
+.login-heading{font-size:20px;font-weight:700;color:var(--text-primary);margin-top:40px;text-align:center}
+.login-sub{font-size:13px;color:var(--text-secondary);text-align:center;margin-top:6px;line-height:1.5}
+.login-form{display:flex;flex-direction:column;gap:12px;margin-top:28px}
+.login-field{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;padding:14px 16px;font-size:14px;color:var(--text-primary);outline:none;font-family:inherit;transition:border-color .15s}
+.login-field:focus{border-color:var(--gold)}
+.login-field::placeholder{color:var(--text-tertiary)}
+.login-primary{background:var(--gold);color:#fff;border:none;padding:15px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px;transition:background .15s}
+.login-primary:hover{background:var(--gold-dark)}
+.login-primary:disabled{opacity:.5;cursor:not-allowed}
+.login-toggle-row{text-align:center;font-size:13px;color:var(--text-secondary);margin-top:4px}
+.login-toggle-row .toggle-link{color:var(--gold-dark);cursor:pointer;font-weight:600;margin-left:4px}
+.login-msg{text-align:center;font-size:12px;min-height:16px;margin-top:4px;line-height:1.4}
+.login-msg.err{color:#b85555}
+.login-msg.ok{color:#6a8a5a}
+.login-footer{text-align:center;font-size:10px;color:var(--text-quaternary);letter-spacing:1px;margin-top:auto}
+
+/* Timeline */
+#s-main{background:var(--bg-screen);color:var(--text-primary)}
+.main-header{padding:14px 18px 8px}
+.main-date{font-size:24px;font-weight:700;color:var(--text-primary)}
+.main-date span{color:var(--gold)}
+.main-week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:10px}
+.wday{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.wday-name{font-size:9px;color:var(--text-tertiary);text-transform:uppercase}
+.wday-num{font-size:14px;font-weight:500;color:var(--text-secondary);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.wday-num.today{background:var(--gold);color:#fff;font-weight:700}
+.wday-num.selected{border:2px solid var(--text-primary);color:var(--text-primary)}
+.wday-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:8px}
+.wdot{width:5px;height:5px;border-radius:50%}
+
+.tl-scroll{flex:1;overflow-y:auto;padding:8px 0 90px}
+.tl-scroll::-webkit-scrollbar{display:none}
+.tl-empty{padding:60px 18px;text-align:center;color:var(--text-tertiary);font-size:13px;line-height:1.6}
+.tl-empty small{color:var(--text-quaternary);display:block;margin-top:8px;font-size:11px}
+
+/* Timeline (v5-Look): Linie durchgehend in der track-Spalte, Marker-Bubbles sitzen auf der Linie. */
+.timeline-item{display:grid;grid-template-columns:40px 42px 1fr 30px;align-items:start;gap:8px;margin-bottom:2px;min-height:58px;position:relative}
+.timeline-item .time{color:var(--text-tertiary);font-size:11px;line-height:1.2;padding-top:12px;text-align:right;font-variant-numeric:tabular-nums}
+.timeline-item .track{position:relative;min-height:58px;cursor:pointer}
+.timeline-item .track::before{content:"";position:absolute;left:19px;top:-2px;bottom:-2px;width:2px;border-radius:2px;background:var(--border-medium)}
+.timeline-item:first-child .track::before{top:50%}
+.timeline-item:last-child .track::before{bottom:50%}
+.bubble{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;position:relative;z-index:1;color:#fff;box-shadow:0 2px 6px rgba(46,40,32,0.12);margin-top:8px}
+/* Anker: nur kleiner roter Kreis auf der Linie, kein Icon, kein Label. */
+.bubble.anchor{width:20px;height:20px;border-radius:50%;background:#b85555;margin-top:18px;margin-left:10px;box-shadow:0 1px 3px rgba(184,85,85,0.35)}
+.bubble.anchor > svg{display:none}
+.bubble.audio{background:var(--mt-audio)}
+.bubble.compression{background:var(--mt-compression)}
+.bubble.planned{background:var(--mt-planned);border:2px dashed rgba(255,255,255,0.55)}
+.bubble.planned.passed{border-style:solid;opacity:.85}
+.item-content{padding-top:8px;cursor:pointer;min-width:0}
+.item-content small{display:block;font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.6px}
+.item-content strong{display:block;margin-top:2px;font-size:14px;font-weight:600;color:var(--text-primary);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item-content p{margin:3px 0 0;font-size:11px;color:var(--text-secondary);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item-tags{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.tl-tag{font-size:9px;padding:2px 7px;border-radius:10px;background:var(--gold-pale);color:var(--gold-dark);text-transform:lowercase;letter-spacing:.3px}
+.timeline-item.done .item-content strong,.timeline-item.done .item-content small{text-decoration:line-through;opacity:.6}
+.check-btn{margin-top:14px;width:24px;height:24px;border-radius:50%;border:2px solid var(--mt-planned);background:transparent;cursor:pointer;padding:0;display:grid;place-items:center}
+.check-btn.done{background:var(--mt-planned);border-color:var(--mt-planned)}
+.check-btn.hidden{visibility:hidden;pointer-events:none}
+.feature-hidden{display:none !important}
+
+/* View-Toggle (Tag / Woche) — segmented control im Header. */
+.view-toggle{display:flex;gap:0;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:10px;padding:2px;margin:8px 0 0;width:fit-content;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.view-toggle button{padding:5px 16px;background:transparent;border:none;border-radius:8px;font-size:12px;font-weight:500;color:var(--text-secondary);cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.view-toggle button.active{background:var(--gold);color:#fff}
+
+/* Wochenansicht: 5 oder 7 Tagespalten mit Stundenraster, Marker als kleine Punkte. */
+#week-view{flex:1;overflow:hidden;display:none;flex-direction:column}
+body.view-week #tl-scroll{display:none}
+body.view-week #week-view{display:flex}
+body.view-week .main-week{display:none}
+.week-grid-wrap{flex:1;overflow:auto;padding:0 6px 90px;-webkit-overflow-scrolling:touch}
+.week-grid-wrap::-webkit-scrollbar{display:none}
+.week-grid{display:grid;grid-template-columns:30px repeat(var(--week-cols,7),1fr);gap:2px;padding-top:4px}
+.week-hours-col{display:flex;flex-direction:column;padding-top:36px;align-items:flex-end;padding-right:4px;font-size:9px;color:var(--text-tertiary);font-variant-numeric:tabular-nums}
+.week-hour-cell{height:48px;line-height:1}
+.week-col{display:flex;flex-direction:column;cursor:pointer;min-width:0}
+.week-col-head{padding:4px 2px 6px;text-align:center;flex-shrink:0}
+.week-col-name{display:block;font-size:9px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.5px}
+.week-col-num{display:inline-block;margin-top:2px;font-size:12px;font-weight:600;width:22px;height:22px;line-height:22px;border-radius:50%;color:var(--text-secondary)}
+.week-col-num.today{background:var(--gold);color:#fff}
+.week-col-num.selected{border:2px solid var(--text-primary);color:var(--text-primary);line-height:18px}
+.week-col-track{position:relative;flex:1;border-left:1px solid var(--border-subtle);border-right:1px solid var(--border-subtle);background:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,var(--border-subtle) 47px,var(--border-subtle) 48px)}
+.week-marker{position:absolute;left:50%;transform:translateX(-50%);border-radius:50%;cursor:pointer;box-shadow:0 1px 2px rgba(46,40,32,0.25);z-index:1}
+.week-marker.audio{width:12px;height:12px;background:var(--mt-audio)}
+.week-marker.compression{width:12px;height:12px;background:var(--mt-compression)}
+.week-marker.planned{width:12px;height:12px;background:var(--mt-planned);border:1.5px dashed rgba(255,255,255,0.55);box-sizing:border-box}
+.week-marker.anchor{width:7px;height:7px;background:#b85555}
+.week-marker.passed{opacity:.7}
+
+/* Bottom nav */
+.bottom-nav{background:var(--bg-nav);display:flex;justify-content:space-around;align-items:center;padding:10px 0 14px;border-top:0.5px solid var(--border-subtle);position:relative}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--text-tertiary);font-size:10px;padding:2px 10px}
+.nav-item.active{color:var(--gold)}
+.nav-fab{position:absolute;right:16px;top:-22px;width:44px;height:44px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;border:3px solid var(--bg-screen);box-shadow:0 4px 12px rgba(184,150,104,0.3)}
+
+/* Marker bottom sheet */
+.sheet-backdrop{display:none;position:absolute;inset:0;background:rgba(46,40,32,0.35);z-index:10;align-items:flex-end;justify-content:center}
+.sheet-backdrop.open{display:flex}
+.sheet{background:var(--bg-screen);width:100%;border-radius:24px 24px 0 0;padding:14px 18px 24px;animation:sheetIn .2s ease-out}
+@keyframes sheetIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border-medium);margin:0 auto 16px}
+.sheet-title{font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.sheet-sub{font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.5}
+.sheet-option{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border-subtle);cursor:pointer;margin-bottom:8px;transition:background .15s}
+.sheet-option:hover{background:var(--bg-subtle)}
+.sheet-opt-icon{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.sheet-opt-text{flex:1}
+.sheet-opt-title{font-size:14px;font-weight:600;color:var(--text-primary)}
+.sheet-opt-desc{font-size:11px;color:var(--text-secondary);margin-top:2px;line-height:1.4}
+.sheet-cancel{display:block;width:100%;text-align:center;padding:12px;margin-top:8px;font-size:13px;color:var(--text-secondary);background:none;border:none;cursor:pointer}
+
+/* Shared marker editor screens */
+#s-audio,#s-planned,#s-marker-detail,#s-note-edit,#s-settings{background:var(--bg-screen);color:var(--text-primary);padding:14px 18px 24px}
+.mk-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.mk-back{background:none;border:none;font-size:26px;color:var(--text-secondary);cursor:pointer;line-height:1}
+.mk-save{background:var(--gold);color:#fff;border:none;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer}
+.mk-save:disabled{opacity:.4;cursor:not-allowed}
+.mk-heading{font-size:24px;font-weight:700;margin-bottom:6px}
+.mk-heading .accent{color:var(--gold)}
+.mk-intro{font-size:13px;color:var(--text-secondary);margin-bottom:18px;line-height:1.5}
+.mk-field-label{font-size:11px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px}
+.mk-input{width:100%;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text-primary);font-family:inherit;outline:none}
+.mk-input:focus{border-color:var(--gold)}
+.mk-textarea{width:100%;min-height:96px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--text-primary);font-family:inherit;outline:none;resize:vertical;line-height:1.5}
+.mk-textarea:focus{border-color:var(--gold)}
+.mk-hint{font-size:11px;color:var(--text-tertiary);margin-top:6px;line-height:1.4;font-style:italic}
+.plan-kind-row{display:flex;gap:8px}
+.plan-kind-btn{flex:1;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--text-primary);cursor:pointer}
+.plan-kind-btn.active{background:var(--gold-pale);border-color:var(--gold);color:var(--gold-dark);font-weight:600}
+
+.record-box{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:14px;padding:12px 12px 10px}
+.record-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.record-state{font-size:12px;color:var(--text-secondary)}
+.record-seconds{font-size:12px;color:var(--gold-dark);font-weight:600;font-variant-numeric:tabular-nums}
+.record-actions{display:flex;gap:8px;margin-top:10px}
+.record-btn{flex:1;border:1px solid var(--border-subtle);background:var(--bg-subtle);padding:10px 8px;border-radius:10px;font-size:12px;color:var(--text-primary);cursor:pointer}
+.record-btn.primary{background:var(--gold);border-color:var(--gold);color:#fff}
+.record-btn:disabled{opacity:.5;cursor:not-allowed}
+#audio-preview-wrap{margin-top:10px;display:none}
+#audio-preview{width:100%}
+
+/* Marker detail */
+.detail-meta{font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:10px}
+.detail-card{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:14px;padding:12px;margin-bottom:10px}
+.detail-title{font-size:12px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.detail-tags-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.detail-tag-chip{font-size:11px;padding:4px 10px;border-radius:12px;background:var(--gold-pale);color:var(--gold-dark);display:inline-flex;align-items:center;gap:4px}
+.detail-tag-chip .remove{cursor:pointer;opacity:.65;font-size:14px;line-height:1}
+.detail-tag-input{font-size:12px;background:transparent;border:none;outline:none;padding:4px;min-width:90px;color:var(--text-primary);font-family:inherit}
+.detail-actions{display:flex;gap:8px;margin-top:8px}
+.detail-actions .mk-save{flex:1}
+.detail-ghost{flex:1;background:transparent;border:1px solid var(--border-subtle);color:var(--text-primary);padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer}
+
+/* Notes */
+#s-notes{background:var(--bg-screen);color:var(--text-primary)}
+.notes-header{padding:14px 18px 8px}
+.notes-heading{font-size:24px;font-weight:700}
+.notes-heading .accent{color:var(--gold)}
+.notes-sub{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.notes-scroll{flex:1;overflow-y:auto;padding:12px 18px 90px}
+.notes-scroll::-webkit-scrollbar{display:none}
+.notes-empty{padding:60px 18px;text-align:center;color:var(--text-tertiary);font-size:13px;line-height:1.6}
+.notes-empty small{color:var(--text-quaternary);display:block;margin-top:8px;font-size:11px}
+.note-card{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:background .15s}
+.note-card:hover{background:var(--bg-subtle)}
+.note-meta{font-size:10px;color:var(--text-tertiary);margin-bottom:4px;display:flex;justify-content:space-between}
+.note-linked{font-size:9px;color:var(--gold-dark);background:var(--gold-pale);padding:2px 7px;border-radius:10px}
+.note-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.note-title.untitled{color:var(--text-tertiary);font-weight:500;font-style:italic}
+.note-content{font-size:12px;color:var(--text-secondary);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.note-tags{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.note-title-input{width:100%;background:transparent;border:none;font-size:22px;font-weight:700;color:var(--text-primary);outline:none;font-family:inherit;padding:8px 0;margin-bottom:6px}
+.note-title-input::placeholder{color:var(--text-tertiary)}
+.note-content-input{width:100%;flex:1;min-height:260px;background:transparent;border:none;font-size:14px;color:var(--text-primary);line-height:1.6;outline:none;font-family:inherit;resize:none}
+.note-content-input::placeholder{color:var(--text-tertiary)}
+.note-tags-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:12px;padding:10px 0;border-top:1px solid var(--border-subtle)}
+.tag-chip{font-size:11px;padding:4px 10px;border-radius:12px;background:var(--gold-pale);color:var(--gold-dark);display:inline-flex;align-items:center;gap:4px}
+.tag-chip .remove{cursor:pointer;opacity:.65;font-size:14px;line-height:1}
+.tag-input{font-size:12px;background:transparent;border:none;outline:none;padding:4px;min-width:80px;color:var(--text-primary);font-family:inherit}
+.note-delete{background:none;border:none;color:#b85555;font-size:13px;padding:12px;cursor:pointer;text-align:center;margin-top:8px}
+.note-stt-box{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:12px;padding:10px 12px;margin:4px 0 10px}
+.note-stt-row{display:flex;gap:8px;align-items:center}
+.note-stt-btn{flex:1;border:1px solid var(--border-subtle);background:var(--bg-subtle);padding:9px 8px;border-radius:10px;font-size:12px;color:var(--text-primary);cursor:pointer}
+.note-stt-btn.primary{background:var(--gold);border-color:var(--gold);color:#fff}
+.note-stt-btn:disabled{opacity:.5;cursor:not-allowed}
+.note-stt-status{font-size:11px;color:var(--text-secondary);margin-top:8px;line-height:1.4}
+#note-stt-audio{width:100%;margin-top:8px;display:none}
+
+/* Settings */
+.settings-card{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:14px;padding:12px;margin-bottom:10px}
+.settings-title{font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:8px;gap:8px}
+.settings-range{width:100%}
+.settings-input{width:100%;background:var(--bg-subtle);border:1px solid var(--border-subtle);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text-primary);font-family:inherit;outline:none}
+.settings-input:focus{border-color:var(--gold)}
+.settings-btn{width:100%;background:var(--gold);color:#fff;border:none;border-radius:10px;padding:10px 12px;font-size:13px;cursor:pointer}
+.settings-btn.secondary{background:var(--bg-subtle);color:var(--text-primary);border:1px solid var(--border-subtle)}
+.settings-btn.danger{background:#b85555}
+.settings-hint{font-size:11px;color:var(--text-tertiary);line-height:1.4}
+
+.version-foot{font-size:10px;color:var(--text-quaternary);text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="notch-bar"><div class="notch"></div></div>
+
+  <div class="screen" id="s-login">
+    <div>
+      <div class="login-brand">
+        <div class="login-logo">AURUM</div>
+        <div class="login-tagline">Verstehen · Erinnern · Ruhen</div>
+      </div>
+      <div class="login-heading" id="login-heading">Willkommen zurück</div>
+      <div class="login-sub" id="login-sub">Melde dich an, um deine Marker<br>zu öffnen.</div>
+      <div class="login-form">
+        <input class="login-field" type="email" id="auth-email" placeholder="E-Mail" autocomplete="email">
+        <input class="login-field" type="password" id="auth-password" placeholder="Passwort" autocomplete="current-password">
+        <button class="login-primary" id="auth-submit" onclick="submitAuth()">Einloggen</button>
+        <div class="login-msg" id="auth-msg"></div>
+        <div class="login-toggle-row" id="auth-toggle-row">
+          Noch kein Konto?<span class="toggle-link" onclick="toggleAuthMode()">Registrieren</span>
+        </div>
+      </div>
+    </div>
+    <div class="login-footer admin-only">AURUM · DIPLOMARBEIT · <span id="login-version">v0.06</span></div>
+  </div>
+
+  <div class="screen" id="s-main">
+    <div class="main-header">
+      <div class="main-date" id="main-date-label">·</div>
+      <div class="main-week" id="main-week"></div>
+      <div class="view-toggle">
+        <button id="vt-day-btn" type="button" class="active">Tag</button>
+        <button id="vt-week-btn" type="button">Woche</button>
+      </div>
+    </div>
+    <div class="tl-scroll" id="tl-scroll"></div>
+    <div id="week-view">
+      <div class="week-grid-wrap" id="week-grid-wrap"></div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="goTo('s-main')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+        Timeline
+      </div>
+      <div class="nav-item" onclick="goTo('s-notes')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10l4 4v14H5V3z"/><polyline points="15 3 15 7 19 7"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+        Notizen
+      </div>
+      <div class="nav-item" onclick="goTo('s-settings')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Einstellungen
+      </div>
+      <div class="nav-fab" onclick="openMarkerSheet()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+    </div>
+
+    <div class="sheet-backdrop" id="marker-sheet" onclick="if(event.target===this)closeMarkerSheet()">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Planung & Protokoll</div>
+        <div class="sheet-sub">Anker und Audiomarker kommen vom Ring. Hier planst du Termine/Ereignisse oder protokollierst Kompressionen.</div>
+
+        <div class="sheet-option" data-feature="manualAnchor" onclick="createAnchor()">
+          <div class="sheet-opt-icon" style="background:var(--mt-anchor)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="6"/></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Anker</div>
+            <div class="sheet-opt-desc">Leerer Zeitpunkt mit optionalem Ort.</div>
+          </div>
+        </div>
+
+        <div class="sheet-option" data-feature="manualAudio" onclick="goTo('s-audio')">
+          <div class="sheet-opt-icon" style="background:var(--mt-audio)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="4" y1="12" x2="4" y2="12"/><line x1="8" y1="9" x2="8" y2="15"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="16" y1="9" x2="16" y2="15"/><line x1="20" y1="12" x2="20" y2="12"/></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Audiomarker</div>
+            <div class="sheet-opt-desc">Nimmt Audio auf und speichert es in Supabase Storage.</div>
+          </div>
+        </div>
+
+        <div class="sheet-option" onclick="openPlanning('termin')">
+          <div class="sheet-opt-icon" style="background:var(--mt-planned)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Termin planen</div>
+            <div class="sheet-opt-desc">Verbindlichen Zeitpunkt mit Ring-Rückmeldung einplanen.</div>
+          </div>
+        </div>
+
+        <div class="sheet-option" onclick="openPlanning('ereignis')">
+          <div class="sheet-opt-icon" style="background:#94b2a1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M6 4h12v16H6z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Ereignis planen</div>
+            <div class="sheet-opt-desc">Event oder Anlass erfassen, inkl. optionaler Details.</div>
+          </div>
+        </div>
+
+        <div class="sheet-option" onclick="createCompression()">
+          <div class="sheet-opt-icon" style="background:var(--mt-compression)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M6 8 L12 12 L6 16"/><path d="M18 8 L12 12 L18 16"/></svg>
+          </div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Kompression protokollieren</div>
+            <div class="sheet-opt-desc">Momentaufnahme eines haptischen Eingriffs.</div>
+          </div>
+        </div>
+
+        <button class="sheet-cancel" onclick="closeMarkerSheet()">Abbrechen</button>
+      </div>
+    </div>
+
+    <div class="sheet-backdrop" id="week-days-sheet" onclick="if(event.target===this)closeWeekDaysSheet()">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Wochenansicht</div>
+        <div class="sheet-sub">Wie viele Tage zeigen?</div>
+
+        <div class="sheet-option" onclick="setWeekDays(5)">
+          <div class="sheet-opt-icon" style="background:var(--bg-subtle);color:var(--text-primary);font-weight:700;font-size:14px">5</div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Arbeitswoche</div>
+            <div class="sheet-opt-desc">Mo – Fr</div>
+          </div>
+        </div>
+
+        <div class="sheet-option" onclick="setWeekDays(7)">
+          <div class="sheet-opt-icon" style="background:var(--bg-subtle);color:var(--text-primary);font-weight:700;font-size:14px">7</div>
+          <div class="sheet-opt-text">
+            <div class="sheet-opt-title">Ganze Woche</div>
+            <div class="sheet-opt-desc">Mo – So</div>
+          </div>
+        </div>
+
+        <button class="sheet-cancel" onclick="closeWeekDaysSheet()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="s-audio" data-feature="manualAudio">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="leaveAudioScreen()">‹</button>
+      <button class="mk-save" id="audio-save" onclick="saveAudioMarker()" disabled>Speichern</button>
+    </div>
+    <div class="mk-heading"><span class="accent">Audio</span>marker</div>
+    <div class="mk-intro">In v0.09 wird Audio direkt im Browser aufgenommen, lokal vorgehört und als Datei hochgeladen.</div>
+
+    <div class="mk-field-label">Aufnahme</div>
+    <div class="record-box">
+      <div class="record-head">
+        <div class="record-state" id="record-state">Noch keine Aufnahme.</div>
+        <div class="record-seconds" id="record-seconds">00:00</div>
+      </div>
+      <div class="record-actions">
+        <button class="record-btn primary" id="record-start" onclick="startAudioRecording()">Aufnehmen</button>
+        <button class="record-btn" id="record-stop" onclick="stopAudioRecording('manual')" disabled>Stop</button>
+      </div>
+      <div id="audio-preview-wrap">
+        <audio id="audio-preview" controls></audio>
+      </div>
+    </div>
+    <div class="mk-hint">Auto-Stop bei 20 Sekunden, falls nicht manuell gestoppt.</div>
+
+    <div class="mk-field-label">Transkript (optional in v0.09)</div>
+    <textarea class="mk-textarea" id="audio-transcript" placeholder="Optionaler Text, bis AURA-Transkription live ist." oninput="onAudioInput()"></textarea>
+
+    <div class="mk-field-label">Moment-Zusammenfassung (optional)</div>
+    <textarea class="mk-textarea" id="audio-summary" placeholder="Kurze Essenz des Moments." oninput="onAudioInput()"></textarea>
+
+    <div class="mk-field-label">Zeitpunkt</div>
+    <input class="mk-input" type="time" id="audio-time">
+  </div>
+
+  <div class="screen" id="s-planned">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="goTo('s-main')">‹</button>
+      <button class="mk-save" id="planned-save" onclick="savePlannedMarker()" disabled>Speichern</button>
+    </div>
+    <div class="mk-heading"><span class="accent">Planung</span> erstellen</div>
+    <div class="mk-intro">Planung läuft bewusst über die App. Ring-Rückmeldung bleibt ohne Push und wird später in der Timeline erledigt.</div>
+
+    <div class="mk-field-label">Typ</div>
+    <div class="plan-kind-row">
+      <button class="plan-kind-btn" id="planned-kind-termin" onclick="setPlannedKind('termin')" type="button">Termin</button>
+      <button class="plan-kind-btn" id="planned-kind-ereignis" onclick="setPlannedKind('ereignis')" type="button">Ereignis</button>
+    </div>
+
+    <div class="mk-field-label">Titel</div>
+    <input class="mk-input" id="planned-title" placeholder="z. B. Einkaufen, Anruf, Durchatmen" oninput="onPlannedInput()">
+
+    <div class="mk-field-label">Details (optional)</div>
+    <textarea class="mk-textarea" id="planned-note" placeholder="Optionaler Kontext für später." oninput="onPlannedInput()"></textarea>
+
+    <div class="mk-field-label">Zeit</div>
+    <input class="mk-input" type="time" id="planned-time" oninput="onPlannedInput()">
+
+    <div class="mk-field-label">Druckaufbau (Sekunden)</div>
+    <input class="mk-input" type="number" min="10" max="60" step="5" id="planned-compression-seconds" oninput="onPlannedInput()">
+
+    <div class="mk-field-label">Wiederholen alle (Minuten, 0 = aus)</div>
+    <input class="mk-input" type="number" min="0" max="240" step="5" id="planned-repeat-interval" oninput="onPlannedInput()">
+    <div class="mk-hint">Standards kommen aus Einstellungen und können hier pro Marker überschrieben werden.</div>
+  </div>
+
+  <div class="screen" id="s-marker-detail">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="goTo('s-main')">‹</button>
+      <button class="mk-save" id="detail-save" onclick="saveMarkerDetail()">Marker speichern</button>
+    </div>
+    <div class="mk-heading" id="detail-heading"><span class="accent">Marker</span>detail</div>
+    <div class="detail-meta" id="detail-meta"></div>
+
+    <div class="detail-card" id="detail-audio-wrap">
+      <div class="detail-title">Audio</div>
+      <audio id="detail-audio-player" controls style="width:100%;display:none"></audio>
+      <div id="detail-audio-empty" class="mk-hint">Kein Audio hinterlegt.</div>
+    </div>
+
+    <div class="detail-card" id="detail-transcript-wrap">
+      <div class="detail-title">Transkript</div>
+      <textarea class="mk-textarea" id="detail-transcript" placeholder="Transkript"></textarea>
+    </div>
+
+    <div class="detail-card" id="detail-summary-wrap">
+      <div class="detail-title">Moment-Zusammenfassung</div>
+      <textarea class="mk-textarea" id="detail-summary" placeholder="Essenz des Moments"></textarea>
+    </div>
+
+    <div class="detail-card" id="detail-tags-wrap">
+      <div class="detail-title">Tags</div>
+      <div class="detail-tags-row" id="detail-tags-row">
+        <input class="detail-tag-input" id="detail-tag-input" placeholder="+ Tag" onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();addDetailTagFromInput()}">
+      </div>
+      <div class="mk-hint">v0.09 setzt Tags als Prototyp lokal aus dem Transkript.</div>
+    </div>
+
+    <div class="detail-card" id="detail-non-audio-wrap" style="display:none">
+      <div class="detail-title">Marker</div>
+      <div id="detail-non-audio-text" style="font-size:13px;color:var(--text-secondary);line-height:1.5"></div>
+    </div>
+
+    <div class="detail-actions">
+      <button class="detail-ghost" onclick="openNoteFromDetail()">Zur Notiz</button>
+      <button class="mk-save" onclick="goTo('s-main')">Fertig</button>
+    </div>
+  </div>
+
+  <div class="screen" id="s-notes">
+    <div class="notes-header">
+      <div class="notes-heading"><span class="accent">Notizen</span></div>
+      <div class="notes-sub">Bedeutung, die nach dem Moment entsteht.</div>
+    </div>
+    <div class="notes-scroll" id="notes-scroll"></div>
+
+    <div class="bottom-nav">
+      <div class="nav-item" onclick="goTo('s-main')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+        Timeline
+      </div>
+      <div class="nav-item active" onclick="goTo('s-notes')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10l4 4v14H5V3z"/><polyline points="15 3 15 7 19 7"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+        Notizen
+      </div>
+      <div class="nav-item" onclick="goTo('s-settings')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Einstellungen
+      </div>
+      <div class="nav-fab" onclick="openNewNote()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="s-note-edit">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="closeNoteEdit()">‹</button>
+      <button class="mk-save" id="note-save" onclick="saveNote()">Speichern</button>
+    </div>
+    <input class="note-title-input" id="note-title" placeholder="Titel (optional)">
+    <div id="note-linked-banner" style="display:none;font-size:11px;color:var(--gold-dark);background:var(--gold-pale);padding:6px 10px;border-radius:8px;margin-bottom:10px"></div>
+    <div class="note-stt-box">
+      <div class="note-stt-row">
+        <button class="note-stt-btn primary" id="note-stt-record" onclick="startNoteSttRecording()">Aufnahme</button>
+        <button class="note-stt-btn" id="note-stt-stop" onclick="stopNoteSttRecording('manual')" disabled>Stop</button>
+        <button class="note-stt-btn" id="note-stt-transcribe" onclick="transcribeNoteStt()" disabled>Transkribieren</button>
+      </div>
+      <div class="note-stt-status" id="note-stt-status">Sprachaufnahme für Notizen (optional).</div>
+      <audio id="note-stt-audio" controls></audio>
+    </div>
+    <textarea class="note-content-input" id="note-content" placeholder="Schreib frei. Gedanken, Situation, Auslöser, Reaktion."></textarea>
+    <div class="note-tags-row" id="note-tags-row">
+      <input class="tag-input" id="note-tag-input" placeholder="+ Tag" onkeydown="if(event.key==='Enter'||event.key===','){event.preventDefault();addTagFromInput()}">
+    </div>
+    <button class="note-delete" id="note-delete-btn" onclick="deleteNote()" style="display:none">Notiz löschen</button>
+  </div>
+
+  <div class="screen" id="s-settings">
+    <div class="mk-topbar">
+      <button class="mk-back" onclick="goTo('s-main')">‹</button>
+      <button class="mk-save" onclick="goTo('s-main')">Fertig</button>
+    </div>
+    <div class="mk-heading"><span class="accent">Einstel</span>lungen</div>
+    <div class="mk-intro">Ruhige Defaults für geplante Marker und Ring-Anbindung.</div>
+
+    <div class="settings-card admin-only">
+      <div class="settings-title">Ring</div>
+      <div class="settings-row">
+        <span>Status</span>
+        <strong id="ring-status" style="color:var(--text-primary)">Nicht gekoppelt</strong>
+      </div>
+      <div class="settings-row" style="margin-bottom:4px">
+        <span>Service UUID</span>
+      </div>
+      <input class="settings-input" id="ring-service-uuid" placeholder="z. B. 6e400001-b5a3-f393-e0a9-e50e24dcca9e" oninput="onSettingsInput()">
+      <div class="settings-row" style="margin-top:10px;margin-bottom:4px">
+        <span>Notify Char UUID</span>
+      </div>
+      <input class="settings-input" id="ring-notify-char" placeholder="z. B. 6e400003-b5a3-f393-e0a9-e50e24dcca9e" oninput="onSettingsInput()">
+      <div class="settings-row" style="margin-top:10px;margin-bottom:4px">
+        <span>Write Char UUID</span>
+      </div>
+      <input class="settings-input" id="ring-write-char" placeholder="z. B. 6e400002-b5a3-f393-e0a9-e50e24dcca9e" oninput="onSettingsInput()">
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="settings-btn" style="flex:1" onclick="connectRing()">Verbinden</button>
+        <button class="settings-btn secondary" style="flex:1" onclick="disconnectRing()">Trennen</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="settings-btn secondary" style="flex:1" onclick="sendRingCompressionStart()">Kompression Start</button>
+        <button class="settings-btn secondary" style="flex:1" onclick="sendRingCompressionAbort()">Kompression Abbruch</button>
+      </div>
+      <div class="settings-hint" style="margin-top:8px">Web BLE auf Desktop/Android, iPhone über Capacitor-Bridge. Events vom Ring werden direkt als Marker gespeichert.</div>
+      <pre id="ring-log" style="margin-top:10px;max-height:120px;overflow:auto;background:var(--bg-subtle);border:1px solid var(--border-subtle);border-radius:8px;padding:8px;font-size:11px;color:var(--text-secondary);line-height:1.4"></pre>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-title">Geplante Marker</div>
+      <div class="settings-row">
+        <span>Druckaufbau</span>
+        <strong id="settings-compression-value" style="color:var(--text-primary)">30s</strong>
+      </div>
+      <input class="settings-range" type="range" min="10" max="60" step="5" id="settings-compression-seconds" oninput="onSettingsInput()">
+
+      <div class="settings-row" style="margin-top:10px;margin-bottom:4px">
+        <span>Wiederholung</span>
+        <span style="font-size:11px;color:var(--text-tertiary)">0 = aus</span>
+      </div>
+      <input class="settings-input" type="number" min="0" max="240" step="5" id="settings-repeat-interval" oninput="onSettingsInput()">
+      <div class="settings-hint" style="margin-top:8px">Diese Werte werden bei neuen geplanten Markern vorbelegt.</div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-title">Modus</div>
+      <div class="settings-row">
+        <div>
+          <div>Admin-Modus</div>
+          <div class="settings-hint" style="margin-top:2px">Zeigt Ring-Einstellungen, Simulations-Optionen und Versionsangabe. Fuer Praesentation ausschalten.</div>
+        </div>
+        <button class="settings-btn secondary" id="admin-toggle-btn" onclick="onAdminToggle()" style="min-width:80px">...</button>
+      </div>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-title">Konto</div>
+      <div class="settings-row">
+        <span>E-Mail</span>
+        <span id="settings-email">-</span>
+      </div>
+      <button class="settings-btn danger" onclick="logoutFromSettings()">Abmelden</button>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-title">Geraet</div>
+      <div class="settings-hint" style="margin-bottom:10px">Entfernt die lokale Sitzung und den Admin-Stand von diesem Geraet. Beim naechsten Oeffnen startet AURUM wie neu. Die Daten in Supabase bleiben.</div>
+      <button class="settings-btn danger" onclick="resetDeviceState()">Komplett zuruecksetzen</button>
+    </div>
+
+    <div class="version-foot admin-only" id="version-foot">AURUM v0.06</div>
+
+    <div class="bottom-nav" style="margin-top:auto">
+      <div class="nav-item" onclick="goTo('s-main')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>
+        Timeline
+      </div>
+      <div class="nav-item" onclick="goTo('s-notes')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10l4 4v14H5V3z"/><polyline points="15 3 15 7 19 7"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+        Notizen
+      </div>
+      <div class="nav-item active" onclick="goTo('s-settings')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Einstellungen
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="./ble-ring.js"></script>
+<script>
+const APP_VERSION = 'v0.06';
+const SUPABASE_URL = 'https://jitkxxpuzmopcrfvzzlz.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_dUNie_zHEDP4PKdMgUO20Q_buLMANmM';
+const STORAGE_BUCKET = 'audio-markers';
+const APP_FEATURES = {
+  manualAnchor: false,
+  manualAudio: false
+};
+const SETTINGS_SYNC_DEBOUNCE_MS = 450;
+
+const DAYS = ['Mo.','Di.','Mi.','Do.','Fr.','Sa.','So.'];
+const MONTHS = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+const DEFAULT_SETTINGS = {
+  compressionSeconds: 30,
+  repeatIntervalMinutes: 0,
+  ringServiceUuid: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+  ringNotifyCharUuid: '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
+  ringWriteCharUuid: '6e400002-b5a3-f393-e0a9-e50e24dcca9e',
+  ringDeviceNamePrefix: 'AURUM'
+};
+
+let AUTH = { access_token:null, refresh_token:null, user:null };
+let authMode = 'login';
+let selectedDay = todayDow();
+let dayMarkers = [];
+let weekMarkerRows = [];
+let weekMarkersFull = [];
+const VIEW_MODE_KEY = 'aurum_view_mode';
+const WEEK_DAYS_KEY = 'aurum_week_days';
+let viewMode = (typeof localStorage !== 'undefined' && localStorage.getItem(VIEW_MODE_KEY) === 'week') ? 'week' : 'day';
+let weekDaysCount = (typeof localStorage !== 'undefined' && localStorage.getItem(WEEK_DAYS_KEY) === '5') ? 5 : 7;
+let allNotes = [];
+let editingNote = null;
+let currentTags = [];
+let currentMarkerLink = null;
+let APP_SETTINGS = { ...DEFAULT_SETTINGS };
+let userSettings = null;
+let remoteSettingsEnabled = true;
+let settingsPersistTimer = null;
+let ringClient = null;
+let ringConnection = { connected:false, transport:'-', deviceName:'-' };
+let ringAudioSession = null;
+let ringPlannedTriggeredIds = new Set();
+let plannedKind = 'termin';
+
+let detailMarker = null;
+let detailTags = [];
+
+let mediaRecorder = null;
+let mediaStream = null;
+let recordChunks = [];
+let recordBlob = null;
+let recordPreviewUrl = null;
+let recordSeconds = 0;
+let recordTimer = null;
+let recordAutoStop = null;
+
+let noteSttRecorder = null;
+let noteSttStream = null;
+let noteSttChunks = [];
+let noteSttBlob = null;
+let noteSttPreviewUrl = null;
+
+const storage = {
+  async get(key) {
+    if (typeof window !== 'undefined' && window.storage && typeof window.storage.get === 'function') {
+      try { const r = await window.storage.get(key); return r ? r.value : null; }
+      catch(e) { return null; }
+    }
+    try { return localStorage.getItem(key); } catch(e) { return null; }
+  },
+  async set(key, val) {
+    if (typeof window !== 'undefined' && window.storage && typeof window.storage.set === 'function') {
+      try { await window.storage.set(key, val); return; } catch(e) {}
+    }
+    try { localStorage.setItem(key, val); } catch(e) {}
+  },
+  async del(key) {
+    if (typeof window !== 'undefined' && window.storage && typeof window.storage.delete === 'function') {
+      try { await window.storage.delete(key); return; } catch(e) {}
+    }
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+};
+
+function todayDow() { return (new Date().getDay() + 6) % 7; }
+function mondayOfWeek() {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - todayDow());
+}
+function dateForDay(i) {
+  const m = mondayOfWeek();
+  return new Date(m.getFullYear(), m.getMonth(), m.getDate() + i);
+}
+function isoDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtTime(t) { return t ? t.slice(0,5) : ''; }
+function nowTimeStr() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function relativeDate(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const dDay = new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const diffDays = Math.round((today - dDay) / 86400000);
+  if (diffDays === 0) return 'Heute';
+  if (diffDays === 1) return 'Gestern';
+  if (diffDays < 7) return `vor ${diffDays} Tagen`;
+  return `${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+}
+function escapeHtml(s) {
+  if (!s && s !== 0) return '';
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+async function loadSession() {
+  try {
+    const raw = await storage.get('aurum_session');
+    if (raw) {
+      const s = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (s && s.access_token) { AUTH = s; return true; }
+    }
+  } catch(e) {}
+  return false;
+}
+async function saveSession(s) {
+  AUTH = { access_token:s.access_token, refresh_token:s.refresh_token, user:s.user };
+  await storage.set('aurum_session', JSON.stringify(AUTH));
+}
+async function clearSession() {
+  AUTH = { access_token:null, refresh_token:null, user:null };
+  userSettings = null;
+  if (settingsPersistTimer) {
+    clearTimeout(settingsPersistTimer);
+    settingsPersistTimer = null;
+  }
+  await storage.del('aurum_session');
+}
+
+function clampNumber(value, min, max, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, Math.round(n)));
+}
+function sanitizeUuid(value, fallback) {
+  const v = String(value || '').trim().toLowerCase();
+  if (!v) return fallback;
+  return v;
+}
+function sanitizeText(value, fallback) {
+  const v = String(value || '').trim();
+  if (!v) return fallback;
+  return v;
+}
+
+function normalizeAppSettings(parsed) {
+  const src = parsed || {};
+  return {
+    compressionSeconds: clampNumber(src.compressionSeconds, 10, 60, DEFAULT_SETTINGS.compressionSeconds),
+    repeatIntervalMinutes: clampNumber(src.repeatIntervalMinutes, 0, 240, DEFAULT_SETTINGS.repeatIntervalMinutes),
+    ringServiceUuid: sanitizeUuid(src.ringServiceUuid, DEFAULT_SETTINGS.ringServiceUuid),
+    ringNotifyCharUuid: sanitizeUuid(src.ringNotifyCharUuid, DEFAULT_SETTINGS.ringNotifyCharUuid),
+    ringWriteCharUuid: sanitizeUuid(src.ringWriteCharUuid, DEFAULT_SETTINGS.ringWriteCharUuid),
+    ringDeviceNamePrefix: sanitizeText(src.ringDeviceNamePrefix, DEFAULT_SETTINGS.ringDeviceNamePrefix)
+  };
+}
+
+function appSettingsFromUserSettings(row) {
+  if (!row) return { ...DEFAULT_SETTINGS };
+  return normalizeAppSettings({
+    compressionSeconds: row.compression_seconds,
+    repeatIntervalMinutes: row.repeat_interval_minutes,
+    ringServiceUuid: row.ring_service_uuid,
+    ringNotifyCharUuid: row.ring_notify_char_uuid,
+    ringWriteCharUuid: row.ring_write_char_uuid,
+    ringDeviceNamePrefix: row.ring_device_name_prefix
+  });
+}
+
+function userSettingsPatchFromApp(settings) {
+  return {
+    compression_seconds: clampNumber(settings.compressionSeconds, 10, 60, DEFAULT_SETTINGS.compressionSeconds),
+    repeat_interval_minutes: clampNumber(settings.repeatIntervalMinutes, 0, 240, DEFAULT_SETTINGS.repeatIntervalMinutes),
+    ring_service_uuid: sanitizeUuid(settings.ringServiceUuid, DEFAULT_SETTINGS.ringServiceUuid),
+    ring_notify_char_uuid: sanitizeUuid(settings.ringNotifyCharUuid, DEFAULT_SETTINGS.ringNotifyCharUuid),
+    ring_write_char_uuid: sanitizeUuid(settings.ringWriteCharUuid, DEFAULT_SETTINGS.ringWriteCharUuid),
+    ring_device_name_prefix: sanitizeText(settings.ringDeviceNamePrefix, DEFAULT_SETTINGS.ringDeviceNamePrefix)
+  };
+}
+
+async function loadAppSettings() {
+  try {
+    const raw = await storage.get('aurum_settings');
+    if (!raw) return { ...DEFAULT_SETTINGS };
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return normalizeAppSettings(parsed);
+  } catch(e) {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+function markRemoteSettingsUnavailable(err) {
+  const msg = String(err && err.message ? err.message : err).toLowerCase();
+  if (msg.includes('user_settings')) {
+    remoteSettingsEnabled = false;
+    console.warn('Remote user_settings nicht verfügbar, lokale Settings werden verwendet.');
+    return true;
+  }
+  return false;
+}
+
+const fetchUserSettings = async () => {
+  if (!AUTH.user || !AUTH.user.id) return null;
+  const rows = await sb('user_settings?select=*');
+  if (rows && rows[0]) return rows[0];
+
+  const defaults = {
+    user_id: AUTH.user.id,
+    ...userSettingsPatchFromApp(DEFAULT_SETTINGS),
+    geo_enabled: true
+  };
+  const created = await sb('user_settings', {
+    method:'POST',
+    headers:{ 'Prefer':'return=representation' },
+    body: JSON.stringify([defaults])
+  });
+  if (created && created[0]) return created[0];
+
+  const retry = await sb('user_settings?select=*');
+  return retry && retry[0] ? retry[0] : null;
+};
+
+const patchUserSettings = async ch => {
+  if (!AUTH.user || !AUTH.user.id) return null;
+  const rows = await sb(`user_settings?user_id=eq.${AUTH.user.id}`, {
+    method:'PATCH',
+    headers:{ 'Prefer':'return=representation' },
+    body: JSON.stringify(ch)
+  });
+  return rows && rows[0] ? rows[0] : null;
+};
+
+async function ensureUserSettings() {
+  if (!remoteSettingsEnabled || !AUTH.access_token) return null;
+  if (userSettings) return userSettings;
+  try {
+    userSettings = await fetchUserSettings();
+    return userSettings;
+  } catch(e) {
+    if (!markRemoteSettingsUnavailable(e)) console.warn('user_settings laden fehlgeschlagen:', e);
+    return null;
+  }
+}
+
+async function syncAppSettingsFromRemote() {
+  const remote = await ensureUserSettings();
+  if (!remote) return;
+  APP_SETTINGS = appSettingsFromUserSettings(remote);
+  await storage.set('aurum_settings', JSON.stringify(APP_SETTINGS));
+}
+
+function scheduleRemoteSettingsPersist() {
+  if (!remoteSettingsEnabled || !AUTH.access_token || !AUTH.user) return;
+  if (settingsPersistTimer) clearTimeout(settingsPersistTimer);
+
+  settingsPersistTimer = setTimeout(async () => {
+    try {
+      const remote = await ensureUserSettings();
+      if (!remote) return;
+      const updated = await patchUserSettings(userSettingsPatchFromApp(APP_SETTINGS));
+      if (updated) userSettings = updated;
+    } catch(e) {
+      if (!markRemoteSettingsUnavailable(e)) console.warn('user_settings speichern fehlgeschlagen:', e);
+    }
+  }, SETTINGS_SYNC_DEBOUNCE_MS);
+}
+
+async function saveAppSettings(options = {}) {
+  await storage.set('aurum_settings', JSON.stringify(APP_SETTINGS));
+  if (options.remote === false) return;
+  scheduleRemoteSettingsPersist();
+}
+
+async function authFetch(path, body) {
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
+    method:'POST',
+    headers:{ 'apikey':SUPABASE_KEY, 'Content-Type':'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(data.msg || data.error_description || data.error || 'Authentifizierung fehlgeschlagen');
+  return data;
+}
+const signUp = (e,p) => authFetch('signup', { email:e, password:p });
+const signIn = (e,p) => authFetch('token?grant_type=password', { email:e, password:p });
+
+async function refreshSession() {
+  if (!AUTH.refresh_token) return false;
+  try {
+    await saveSession(await authFetch('token?grant_type=refresh_token', { refresh_token:AUTH.refresh_token }));
+    return true;
+  } catch(e) {
+    await clearSession();
+    return false;
+  }
+}
+
+async function signOut() {
+  if (AUTH.access_token) {
+    try {
+      await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+        method:'POST',
+        headers:{ 'apikey':SUPABASE_KEY, 'Authorization':`Bearer ${AUTH.access_token}` }
+      });
+    } catch(e) {}
+  }
+  await clearSession();
+}
+
+async function sb(path, opts={}) {
+  const makeReq = () => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...opts,
+    headers:{
+      'apikey':SUPABASE_KEY,
+      'Authorization':`Bearer ${AUTH.access_token || SUPABASE_KEY}`,
+      'Content-Type':'application/json',
+      ...(opts.headers || {})
+    }
+  });
+
+  let res = await makeReq();
+  if (res.status === 401 && AUTH.refresh_token) {
+    if (await refreshSession()) res = await makeReq();
+    else { showLoginScreen(); throw new Error('Session abgelaufen'); }
+  }
+
+  if (!res.ok) {
+    const t = await res.text();
+    console.error('Supabase', res.status, t);
+    throw new Error(t || 'Supabase Fehler');
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+const fetchMarkers = iso => sb(`markers?marker_date=eq.${iso}&order=start_time.asc,sort_order.asc`);
+const fetchMarkersRange = (fromIso, toIso) => sb(`markers?select=marker_date,marker_type&marker_date=gte.${fromIso}&marker_date=lte.${toIso}`);
+const fetchMarkersFullRange = (fromIso, toIso) => sb(`markers?marker_date=gte.${fromIso}&marker_date=lte.${toIso}&order=marker_date.asc,start_time.asc`);
+const fetchNotes = () => sb('notes?order=updated_at.desc');
+
+async function insertMarker(m) {
+  const payload = { source:'app', ...(m || {}) };
+  try {
+    const rows = await sb('markers', {
+      method:'POST',
+      headers:{ 'Prefer':'return=representation' },
+      body: JSON.stringify([payload])
+    });
+    return rows && rows[0] ? rows[0] : null;
+  } catch(e) {
+    const msg = String(e && e.message ? e.message : e).toLowerCase();
+    // Kompatibel zu älteren DB-Ständen ohne markers.source
+    if (msg.includes('source')) {
+      const fallbackPayload = { ...payload };
+      delete fallbackPayload.source;
+      const rows = await sb('markers', {
+        method:'POST',
+        headers:{ 'Prefer':'return=representation' },
+        body: JSON.stringify([fallbackPayload])
+      });
+      return rows && rows[0] ? rows[0] : null;
+    }
+    throw e;
+  }
+}
+async function patchMarker(id, ch) {
+  const rows = await sb(`markers?id=eq.${id}`, { method:'PATCH', headers:{ 'Prefer':'return=representation' }, body:JSON.stringify(ch) });
+  return rows && rows[0] ? rows[0] : null;
+}
+async function insertNote(n) {
+  const rows = await sb('notes', { method:'POST', headers:{ 'Prefer':'return=representation' }, body:JSON.stringify([n]) });
+  return rows && rows[0] ? rows[0] : null;
+}
+async function patchNote(id, ch) {
+  const rows = await sb(`notes?id=eq.${id}`, { method:'PATCH', headers:{ 'Prefer':'return=representation' }, body:JSON.stringify(ch) });
+  return rows && rows[0] ? rows[0] : null;
+}
+const deleteNoteById = id => sb(`notes?id=eq.${id}`, { method:'DELETE' });
+
+function encodeStoragePath(path) {
+  return path.split('/').map(part => encodeURIComponent(part)).join('/');
+}
+function mimeToExtension(mimeType) {
+  if (!mimeType) return 'webm';
+  if (mimeType.includes('mp4')) return 'm4a';
+  if (mimeType.includes('ogg')) return 'ogg';
+  if (mimeType.includes('wav')) return 'wav';
+  return 'webm';
+}
+
+async function uploadAudioBlob(blob, markerDate, startTime) {
+  if (!blob) return null;
+  if (!AUTH.access_token) throw new Error('Keine Session für Upload verfügbar');
+
+  const ext = mimeToExtension(blob.type);
+  const safeTime = (startTime || nowTimeStr()).replace(':', '-');
+  const userPart = AUTH.user && AUTH.user.id ? AUTH.user.id : 'anonymous';
+  const filePath = `${userPart}/${markerDate}/${Date.now()}-${safeTime}.${ext}`;
+  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${encodeStoragePath(filePath)}`;
+
+  const res = await fetch(uploadUrl, {
+    method:'POST',
+    headers:{
+      'apikey':SUPABASE_KEY,
+      'Authorization':`Bearer ${AUTH.access_token}`,
+      'Content-Type': blob.type || 'application/octet-stream',
+      'x-upsert':'true'
+    },
+    body: blob
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Audio-Upload fehlgeschlagen (${res.status}): ${text.slice(0,160)}`);
+  }
+
+  return filePath;
+}
+
+async function createSignedAudioUrl(audioPath) {
+  if (!audioPath) return null;
+  const url = `${SUPABASE_URL}/storage/v1/object/sign/${STORAGE_BUCKET}/${encodeStoragePath(audioPath)}`;
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{
+      'apikey':SUPABASE_KEY,
+      'Authorization':`Bearer ${AUTH.access_token}`,
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify({ expiresIn: 3600 })
+  });
+
+  if (!res.ok) {
+    return `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${encodeStoragePath(audioPath)}`;
+  }
+
+  const data = await res.json().catch(()=>null);
+  const signed = data && (data.signedURL || data.signedUrl);
+  if (!signed) return `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${encodeStoragePath(audioPath)}`;
+  if (signed.startsWith('http://') || signed.startsWith('https://')) return signed;
+  return `${SUPABASE_URL}/storage/v1${signed}`;
+}
+
+function positionPromise(options) {
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+  });
+}
+
+async function captureLocationSnapshot() {
+  if (!navigator.geolocation) return null;
+  try {
+    const pos = await positionPromise({ enableHighAccuracy:false, timeout:4000, maximumAge:120000 });
+    const latitude = Number(pos.coords.latitude.toFixed(6));
+    const longitude = Number(pos.coords.longitude.toFixed(6));
+    return {
+      latitude,
+      longitude,
+      location_label: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+    };
+  } catch(e) {
+    return null;
+  }
+}
+
+function markerColor(type) {
+  if (type === 'audio') return 'var(--mt-audio)';
+  if (type === 'compression') return 'var(--mt-compression)';
+  if (type === 'planned') return 'var(--mt-planned)';
+  return 'var(--mt-anchor)';
+}
+
+function applyFeatureVisibility() {
+  document.querySelectorAll('[data-feature]').forEach(el => {
+    const key = el.getAttribute('data-feature');
+    const visible = APP_FEATURES[key] !== false;
+    el.classList.toggle('feature-hidden', !visible);
+  });
+}
+
+function normalizePlannedKind(raw) {
+  const token = String(raw || '').trim().toLowerCase();
+  return token === 'ereignis' ? 'ereignis' : 'termin';
+}
+
+function plannedKindLabel(kind) {
+  return normalizePlannedKind(kind) === 'ereignis' ? 'Ereignis' : 'Termin';
+}
+
+function plannedKindFromMarker(marker) {
+  if (!marker) return 'termin';
+  const token = String(marker.sub || '').trim().toLowerCase();
+  if (token.startsWith('kind:')) return normalizePlannedKind(token.slice(5));
+  if (token === 'ereignis' || token === 'event') return 'ereignis';
+  if (token === 'termin' || token === 'appointment') return 'termin';
+  return 'termin';
+}
+
+function buildWeekDotMap(rows) {
+  const map = {};
+  (rows || []).forEach(r => {
+    const key = r.marker_date;
+    if (!map[key]) map[key] = [];
+    if (map[key].length < 4) map[key].push(markerColor(r.marker_type));
+  });
+  return map;
+}
+
+function ringLog(message) {
+  const el = document.getElementById('ring-log');
+  if (!el) return;
+  const ts = new Date().toLocaleTimeString('de-CH', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const line = `[${ts}] ${message}`;
+  el.textContent = el.textContent ? `${el.textContent}\n${line}` : line;
+  el.scrollTop = el.scrollHeight;
+}
+
+function updateRingStatusUi(extra) {
+  const statusEl = document.getElementById('ring-status');
+  if (!statusEl) return;
+  const base = ringConnection.connected
+    ? `Verbunden (${ringConnection.transport})`
+    : 'Nicht gekoppelt';
+  statusEl.textContent = extra ? `${base} · ${extra}` : base;
+  statusEl.style.color = ringConnection.connected ? '#2f7750' : 'var(--text-primary)';
+}
+
+function currentRingConfig() {
+  return {
+    serviceUuid: APP_SETTINGS.ringServiceUuid,
+    notifyCharUuid: APP_SETTINGS.ringNotifyCharUuid,
+    writeCharUuid: APP_SETTINGS.ringWriteCharUuid,
+    deviceNamePrefix: APP_SETTINGS.ringDeviceNamePrefix
+  };
+}
+
+function normalizeRingEventType(typeRaw) {
+  const token = String(typeRaw || '').trim().toLowerCase();
+  const map = {
+    anchor:'anchor',
+    marker:'anchor',
+    audio_start:'audio_start',
+    start_audio:'audio_start',
+    audio_stop:'audio_stop',
+    stop_audio:'audio_stop',
+    compression:'compression',
+    compress_start:'compression',
+    comp_start:'compression',
+    compression_cancel:'compression_cancel',
+    comp_abort:'compression_cancel',
+    comp_cancel:'compression_cancel'
+  };
+  return map[token] || token || 'unknown';
+}
+
+function ensureRingClient() {
+  if (ringClient) return ringClient;
+  if (typeof createAurumRingClient !== 'function') return null;
+
+  ringClient = createAurumRingClient({
+    onStatus: info => {
+      if (info.phase === 'connected') {
+        ringConnection = {
+          connected:true,
+          transport: info.transport || '-',
+          deviceName: info.deviceName || '-'
+        };
+        updateRingStatusUi(ringConnection.deviceName);
+        ringLog(`Ring verbunden: ${ringConnection.deviceName} (${ringConnection.transport})`);
+      } else if (info.phase === 'connecting') {
+        ringLog('Verbinde Ring…');
+      } else if (info.phase === 'disconnected') {
+        ringConnection = { connected:false, transport:'-', deviceName:'-' };
+        updateRingStatusUi();
+        ringLog('Ring getrennt.');
+      }
+    },
+    onEvent: evt => {
+      handleRingEvent(evt).catch(err => ringLog(`Ring-Event Fehler: ${String(err).slice(0,120)}`));
+    }
+  });
+  return ringClient;
+}
+
+async function createAnchorFromRing() {
+  const now = new Date();
+  const location = await captureLocationSnapshot();
+  await insertMarker({
+    marker_date: isoDate(now),
+    start_time: nowTimeStr(),
+    marker_type: 'anchor',
+    source: 'ring',
+    sub: 'ring_event',
+    icon: 'list',
+    color: '#c4bca8',
+    ...(location || {})
+  });
+  ringLog('Ring-Event: Anchor gespeichert.');
+}
+
+async function createCompressionFromRing(stateLabel) {
+  const now = new Date();
+  const location = await captureLocationSnapshot();
+  await insertMarker({
+    marker_date: isoDate(now),
+    start_time: nowTimeStr(),
+    marker_type: 'compression',
+    source: 'ring',
+    icon: 'list',
+    color: '#c08a7a',
+    sub: stateLabel || 'ring_event',
+    compression_seconds: APP_SETTINGS.compressionSeconds,
+    ...(location || {})
+  });
+  ringLog('Ring-Event: Kompression gespeichert.');
+}
+
+async function persistRingAudioStopEvent() {
+  const now = new Date();
+  const start = ringAudioSession && ringAudioSession.startedAt ? ringAudioSession.startedAt : now;
+  const durationMs = Math.max(0, now.getTime() - start.getTime());
+  const durationMin = Math.max(1, Math.round(durationMs / 60000));
+
+  await insertMarker({
+    marker_date: isoDate(start),
+    start_time: `${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`,
+    marker_type: 'audio',
+    source: 'ring',
+    transcript: null,
+    summary: 'Audio im Ring aufgenommen. Synchronisierung folgt.',
+    tags: ['ring'],
+    duration_minutes: durationMin,
+    icon: 'mail',
+    color: '#b89668'
+  });
+  ringLog(`Ring-Event: Audiomarker gespeichert (${durationMin} min).`);
+}
+
+async function handleRingEvent(evt) {
+  const type = normalizeRingEventType(evt && evt.type);
+  if (type === 'anchor') {
+    await createAnchorFromRing();
+  } else if (type === 'compression') {
+    await createCompressionFromRing('ring_manual');
+  } else if (type === 'compression_cancel') {
+    ringLog('Ring-Event: Kompression abgebrochen.');
+  } else if (type === 'audio_start') {
+    ringAudioSession = { startedAt:new Date() };
+    ringLog('Ring-Event: Audio gestartet.');
+  } else if (type === 'audio_stop') {
+    await persistRingAudioStopEvent();
+    ringAudioSession = null;
+  } else {
+    ringLog(`Ring-Event unbekannt: ${evt && evt.raw ? evt.raw : type}`);
+  }
+
+  if (document.getElementById('s-main').classList.contains('active')) {
+    await loadAndRenderTimeline();
+  } else {
+    // Nur Wochen-Dots aktualisieren, wenn man in einem anderen Screen ist.
+    const fromIso = isoDate(dateForDay(0));
+    const toIso = isoDate(dateForDay(6));
+    weekMarkerRows = await fetchMarkersRange(fromIso, toIso);
+    renderWeek();
+  }
+}
+
+async function connectRing() {
+  APP_SETTINGS.ringServiceUuid = sanitizeUuid(document.getElementById('ring-service-uuid').value, DEFAULT_SETTINGS.ringServiceUuid);
+  APP_SETTINGS.ringNotifyCharUuid = sanitizeUuid(document.getElementById('ring-notify-char').value, DEFAULT_SETTINGS.ringNotifyCharUuid);
+  APP_SETTINGS.ringWriteCharUuid = sanitizeUuid(document.getElementById('ring-write-char').value, DEFAULT_SETTINGS.ringWriteCharUuid);
+  document.getElementById('ring-service-uuid').value = APP_SETTINGS.ringServiceUuid;
+  document.getElementById('ring-notify-char').value = APP_SETTINGS.ringNotifyCharUuid;
+  document.getElementById('ring-write-char').value = APP_SETTINGS.ringWriteCharUuid;
+  await saveAppSettings();
+
+  const client = ensureRingClient();
+  if (!client) {
+    ringLog('Keine BLE-Bridge gefunden (weder Web Bluetooth noch Capacitor Plugin).');
+    return;
+  }
+
+  try {
+    await client.connect(currentRingConfig());
+    evaluatePlannedRingTriggers();
+  } catch(e) {
+    ringLog(`Verbinden fehlgeschlagen: ${String(e).slice(0,140)}`);
+    updateRingStatusUi('Fehler');
+  }
+}
+
+async function disconnectRing() {
+  if (!ringClient) return;
+  try {
+    await ringClient.disconnect();
+  } catch(e) {
+    ringLog(`Trennen fehlgeschlagen: ${String(e).slice(0,120)}`);
+  }
+}
+
+async function sendRingCommand(command, label) {
+  if (!ringClient || !ringConnection.connected) {
+    ringLog('Kein verbundener Ring für Befehl.');
+    return;
+  }
+  try {
+    await ringClient.sendCommand(command);
+    ringLog(`Befehl gesendet: ${label || command}`);
+  } catch(e) {
+    ringLog(`Befehl fehlgeschlagen (${label || command}): ${String(e).slice(0,120)}`);
+  }
+}
+
+function sendRingCompressionStart() {
+  sendRingCommand('COMPRESS_START', 'Kompression Start');
+}
+
+function sendRingCompressionAbort() {
+  sendRingCommand('COMP_ABORT', 'Kompression Abbruch');
+}
+
+function evaluatePlannedRingTriggers() {
+  if (!ringConnection.connected) return;
+  const todayIso = isoDate(new Date());
+  const hm = nowTimeStr();
+  dayMarkers
+    .filter(m => m.marker_type === 'planned' && m.marker_date === todayIso && !m.is_done)
+    .forEach(m => {
+      if (fmtTime(m.start_time) <= hm && !ringPlannedTriggeredIds.has(m.id)) {
+        ringPlannedTriggeredIds.add(m.id);
+        sendRingCommand('COMPRESS_START', `Geplanter Marker ${m.title || fmtTime(m.start_time)}`);
+      }
+      if (m.is_done && ringPlannedTriggeredIds.has(m.id)) {
+        ringPlannedTriggeredIds.delete(m.id);
+      }
+    });
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const isSignup = mode === 'signup';
+  document.getElementById('login-heading').textContent = isSignup ? 'Konto erstellen' : 'Willkommen zurück';
+  document.getElementById('login-sub').innerHTML = isSignup
+    ? 'Lege ein Konto an, um deine<br>Marker sicher zu speichern.'
+    : 'Melde dich an, um deine Marker<br>zu öffnen.';
+  document.getElementById('auth-submit').textContent = isSignup ? 'Registrieren' : 'Einloggen';
+  document.getElementById('auth-password').autocomplete = isSignup ? 'new-password' : 'current-password';
+  document.getElementById('auth-toggle-row').innerHTML = isSignup
+    ? 'Schon registriert?<span class="toggle-link" onclick="toggleAuthMode()">Einloggen</span>'
+    : 'Noch kein Konto?<span class="toggle-link" onclick="toggleAuthMode()">Registrieren</span>';
+  const msg = document.getElementById('auth-msg');
+  msg.textContent = '';
+  msg.className = 'login-msg';
+}
+function toggleAuthMode() {
+  setAuthMode(authMode === 'login' ? 'signup' : 'login');
+}
+
+function showLoginScreen() {
+  disconnectRing().catch(()=>{});
+  stopAudioRecording('cancel').catch(()=>{});
+  userSettings = null;
+  if (settingsPersistTimer) {
+    clearTimeout(settingsPersistTimer);
+    settingsPersistTimer = null;
+  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-login').classList.add('active');
+  const msg = document.getElementById('auth-msg');
+  msg.textContent = '';
+  msg.className = 'login-msg';
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+  setAuthMode('login');
+}
+
+async function submitAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const msg = document.getElementById('auth-msg');
+  const btn = document.getElementById('auth-submit');
+
+  msg.className = 'login-msg';
+  msg.textContent = '';
+
+  if (!email || !password) {
+    msg.className = 'login-msg err';
+    msg.textContent = 'E-Mail und Passwort sind erforderlich.';
+    return;
+  }
+  if (authMode === 'signup' && password.length < 6) {
+    msg.className = 'login-msg err';
+    msg.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = authMode === 'signup' ? 'Registriere…' : 'Logge ein…';
+
+  try {
+    const data = authMode === 'signup' ? await signUp(email, password) : await signIn(email, password);
+    if (data.access_token) {
+      await saveSession(data);
+      await enterApp();
+    } else {
+      msg.className = 'login-msg ok';
+      msg.innerHTML = 'Konto erstellt. Prüfe deine E-Mails,<br>um die Adresse zu bestätigen.';
+      setAuthMode('login');
+    }
+  } catch(e) {
+    msg.className = 'login-msg err';
+    msg.textContent = String(e.message || e).slice(0, 140);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode === 'signup' ? 'Registrieren' : 'Einloggen';
+  }
+}
+
+async function enterApp() {
+  remoteSettingsEnabled = true;
+  await syncAppSettingsFromRemote();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-main').classList.add('active');
+  attachViewToggleHandlers();
+  renderWeek();
+  updateDateLabel();
+  setViewMode(viewMode);
+}
+
+function goTo(id) {
+  if (id === 's-audio' && !APP_FEATURES.manualAudio) {
+    id = 's-main';
+  }
+
+  if (id !== 's-audio') {
+    stopAudioRecording('cancel').catch(()=>{});
+  }
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  closeMarkerSheet();
+
+  if (id === 's-main') {
+    if (viewMode === 'week') loadAndRenderWeek();
+    else loadAndRenderTimeline();
+  }
+  if (id === 's-notes') loadAndRenderNotes();
+  if (id === 's-audio') prepareAudioScreen();
+  if (id === 's-planned') preparePlannedScreen();
+  if (id === 's-settings') prepareSettingsScreen();
+}
+
+function renderWeek() {
+  const w = document.getElementById('main-week');
+  const dotsByDate = buildWeekDotMap(weekMarkerRows);
+  const todayIdx = todayDow();
+  w.innerHTML = '';
+
+  DAYS.forEach((d, i) => {
+    const date = dateForDay(i);
+    const iso = isoDate(date);
+    const dots = (dotsByDate[iso] || []).map(color => `<span class="wdot" style="background:${color}"></span>`).join('');
+    const col = document.createElement('div');
+    col.className = 'wday';
+    col.innerHTML = `
+      <span class="wday-name">${d}</span>
+      <span class="wday-num ${i===todayIdx?'today':''} ${i===selectedDay && i!==todayIdx?'selected':''}">${date.getDate()}</span>
+      <div class="wday-dots">${dots}</div>`;
+    col.onclick = () => {
+      selectedDay = i;
+      renderWeek();
+      updateDateLabel();
+      loadAndRenderTimeline();
+    };
+    w.appendChild(col);
+  });
+}
+
+function updateDateLabel() {
+  const d = dateForDay(selectedDay);
+  document.getElementById('main-date-label').innerHTML = `${d.getDate()}. ${MONTHS[d.getMonth()]} <span>${d.getFullYear()}</span>`;
+}
+
+async function loadAndRenderTimeline() {
+  const scroll = document.getElementById('tl-scroll');
+  scroll.innerHTML = '<div class="tl-empty">Lädt…</div>';
+
+  try {
+    const dayIso = isoDate(dateForDay(selectedDay));
+    const fromIso = isoDate(dateForDay(0));
+    const toIso = isoDate(dateForDay(6));
+
+    const [dayRows, weekRows] = await Promise.all([
+      fetchMarkers(dayIso),
+      fetchMarkersRange(fromIso, toIso)
+    ]);
+
+    dayMarkers = dayRows || [];
+    weekMarkerRows = weekRows || [];
+
+    renderWeek();
+    updateDateLabel();
+    renderTimeline();
+    evaluatePlannedRingTriggers();
+  } catch(e) {
+    scroll.innerHTML = `<div class="tl-empty">Verbindung fehlgeschlagen.<br><small>${escapeHtml(String(e).slice(0,120))}</small></div>`;
+  }
+}
+
+function renderTimeline() {
+  const scroll = document.getElementById('tl-scroll');
+  scroll.innerHTML = '';
+  if (!dayMarkers.length) {
+    scroll.innerHTML = `<div class="tl-empty">Noch kein Marker an diesem Tag.<br><small>Setze einen über das Plus-Symbol.</small></div>`;
+    return;
+  }
+  const nowHM = nowTimeStr();
+  dayMarkers.forEach(m => {
+    scroll.appendChild(renderMarkerCard(m, nowHM));
+  });
+}
+
+function renderMarkerCard(m, nowHM) {
+  const el = document.createElement('div');
+  el.className = 'timeline-item';
+  if (m.marker_type === 'planned' && m.is_done) el.classList.add('done');
+
+  const typeLabels = { anchor:'Anker', audio:'Audiomarker', compression:'Kompression', planned:'Geplant' };
+  const typeLabel = typeLabels[m.marker_type] || 'Marker';
+
+  const bubbleIcons = {
+    anchor:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="6"/></svg>',
+    audio:       '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="4" y1="12" x2="4" y2="12"/><line x1="8" y1="9" x2="8" y2="15"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="16" y1="9" x2="16" y2="15"/><line x1="20" y1="12" x2="20" y2="12"/></svg>',
+    compression: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M6 8 L12 12 L6 16"/><path d="M18 8 L12 12 L18 16"/></svg>',
+    planned:     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>'
+  };
+  const bubbleIcon = bubbleIcons[m.marker_type] || '';
+
+  // Anker hat bewusst keinen Text neben dem roten Kreis.
+  let bodyHtml = '';
+  if (m.marker_type !== 'anchor') {
+    bodyHtml = `<small>${typeLabel}</small>`;
+    if (m.marker_type === 'audio') {
+      bodyHtml += `<strong>Audiomarker</strong>`;
+      const display = m.summary || m.transcript || 'Inhalt liegt in der verknüpften Notiz';
+      bodyHtml += `<p>${escapeHtml(display)}</p>`;
+      const tagsHtml = (m.tags || []).map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('');
+      if (tagsHtml) bodyHtml += `<div class="item-tags">${tagsHtml}</div>`;
+    } else if (m.marker_type === 'compression') {
+      bodyHtml += `<strong>Kompression</strong>`;
+      bodyHtml += `<p>${escapeHtml(m.sub || 'körperlicher Eingriff am Armreif')}</p>`;
+    } else if (m.marker_type === 'planned') {
+      bodyHtml += `<strong>${escapeHtml(m.title || 'Ohne Titel')}</strong>`;
+    }
+  }
+
+  let passed = false;
+  if (m.marker_type === 'planned') {
+    passed = fmtTime(m.start_time) <= nowHM && isoDate(dateForDay(selectedDay)) <= isoDate(new Date());
+  }
+  const bubbleClass = 'bubble ' + m.marker_type + (passed ? ' passed' : '');
+  // planned nutzt die gespeicherte Farbe als Bubble-Background
+  const bubbleStyle = (m.marker_type === 'planned' && m.color) ? ` style="background:${escapeHtml(m.color)}"` : '';
+
+  // Anker bekommt einen Hover-Tooltip mit Zeit, Ort und ggf. Erledigt-Hinweis
+  if (m.marker_type === 'anchor') {
+    const parts = [fmtTime(m.start_time)];
+    if (m.location_label) parts.push(m.location_label);
+    if (m.sub) parts.push(m.sub);
+    el.setAttribute('title', parts.join(' · '));
+  }
+
+  let checkHtml = '<button class="check-btn hidden"></button>';
+  if (m.marker_type === 'planned') {
+    const checkIcon = m.is_done
+      ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
+      : '';
+    const cstyle = m.color ? ` style="border-color:${escapeHtml(m.color)};${m.is_done?`background:${escapeHtml(m.color)};`:''}"` : '';
+    checkHtml = `<button class="check-btn ${m.is_done?'done':''}"${cstyle}>${checkIcon}</button>`;
+  }
+
+  el.innerHTML = `
+    <div class="time">${fmtTime(m.start_time)}</div>
+    <div class="track"><div class="${bubbleClass}"${bubbleStyle}>${bubbleIcon}</div></div>
+    <div class="item-content">${bodyHtml}</div>
+    ${checkHtml}`;
+
+  el.querySelector('.item-content').onclick = () => openMarkerDetail(m);
+  el.querySelector('.track').onclick = () => openMarkerDetail(m);
+  if (m.marker_type === 'planned') {
+    el.querySelector('.check-btn').onclick = (ev) => { ev.stopPropagation(); togglePlannedDone(m); };
+  }
+
+  return el;
+}
+
+// ─── Wochenansicht (Toggle Tag/Woche, optional 5- oder 7-Tage) ───
+function setViewMode(mode) {
+  viewMode = mode === 'week' ? 'week' : 'day';
+  try { localStorage.setItem(VIEW_MODE_KEY, viewMode); } catch(e) {}
+  document.body.classList.toggle('view-week', viewMode === 'week');
+  const dayBtn = document.getElementById('vt-day-btn');
+  const weekBtn = document.getElementById('vt-week-btn');
+  if (dayBtn) dayBtn.classList.toggle('active', viewMode === 'day');
+  if (weekBtn) weekBtn.classList.toggle('active', viewMode === 'week');
+  if (viewMode === 'week') {
+    loadAndRenderWeek();
+  } else if (AUTH && AUTH.access_token) {
+    loadAndRenderTimeline();
+  }
+}
+
+function setWeekDays(n) {
+  weekDaysCount = (Number(n) === 5) ? 5 : 7;
+  try { localStorage.setItem(WEEK_DAYS_KEY, String(weekDaysCount)); } catch(e) {}
+  closeWeekDaysSheet();
+  if (viewMode === 'week') loadAndRenderWeek();
+}
+
+function openWeekDaysSheet() { document.getElementById('week-days-sheet').classList.add('open'); }
+function closeWeekDaysSheet() { document.getElementById('week-days-sheet').classList.remove('open'); }
+
+function attachViewToggleHandlers() {
+  const dayBtn = document.getElementById('vt-day-btn');
+  const weekBtn = document.getElementById('vt-week-btn');
+  if (!dayBtn || !weekBtn) return;
+
+  dayBtn.addEventListener('click', () => setViewMode('day'));
+
+  // Woche-Button: kurzer Tap -> Wochenansicht. Langer Press -> 5/7-Auswahl.
+  let pressTimer = null;
+  let longPressed = false;
+  const startPress = () => {
+    longPressed = false;
+    pressTimer = setTimeout(() => {
+      longPressed = true;
+      pressTimer = null;
+      openWeekDaysSheet();
+      if (navigator.vibrate) { try { navigator.vibrate(20); } catch(e) {} }
+    }, 500);
+  };
+  const cancelPress = () => {
+    if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+  };
+  weekBtn.addEventListener('pointerdown', startPress);
+  weekBtn.addEventListener('pointerup', cancelPress);
+  weekBtn.addEventListener('pointerleave', cancelPress);
+  weekBtn.addEventListener('pointercancel', cancelPress);
+  weekBtn.addEventListener('click', (ev) => {
+    if (longPressed) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      longPressed = false;
+      return;
+    }
+    setViewMode('week');
+  });
+}
+
+async function loadAndRenderWeek() {
+  const wrap = document.getElementById('week-grid-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="tl-empty">Lädt…</div>';
+  try {
+    const fromIso = isoDate(dateForDay(0));
+    const toIso = isoDate(dateForDay(weekDaysCount - 1));
+    const rows = await fetchMarkersFullRange(fromIso, toIso);
+    weekMarkersFull = rows || [];
+    renderWeekView();
+  } catch(e) {
+    wrap.innerHTML = `<div class="tl-empty">Verbindung fehlgeschlagen.<br><small>${escapeHtml(String(e).slice(0,120))}</small></div>`;
+  }
+}
+
+function renderWeekView() {
+  const wrap = document.getElementById('week-grid-wrap');
+  if (!wrap) return;
+
+  const HOUR_START = 6;
+  const HOUR_END = 22;
+  const HOUR_HEIGHT = 48;
+  const days = weekDaysCount;
+  const dayLabels = (days === 5) ? ['Mo','Di','Mi','Do','Fr'] : DAYS;
+  const todayIdx = todayDow();
+  const todayIso = isoDate(new Date());
+  const nowHM = nowTimeStr();
+
+  const byDay = {};
+  weekMarkersFull.forEach(m => {
+    if (!byDay[m.marker_date]) byDay[m.marker_date] = [];
+    byDay[m.marker_date].push(m);
+  });
+
+  wrap.innerHTML = '';
+  const grid = document.createElement('div');
+  grid.className = 'week-grid';
+  grid.style.setProperty('--week-cols', String(days));
+  const trackHeight = HOUR_HEIGHT * (HOUR_END - HOUR_START + 1);
+
+  // Stundenachse links
+  const hoursCol = document.createElement('div');
+  hoursCol.className = 'week-hours-col';
+  for (let h = HOUR_START; h <= HOUR_END; h++) {
+    const cell = document.createElement('div');
+    cell.className = 'week-hour-cell';
+    cell.textContent = String(h).padStart(2,'0');
+    hoursCol.appendChild(cell);
+  }
+  grid.appendChild(hoursCol);
+
+  for (let i = 0; i < days; i++) {
+    const date = dateForDay(i);
+    const iso = isoDate(date);
+    const isToday = iso === todayIso;
+    const isSelected = i === selectedDay && !isToday;
+
+    const col = document.createElement('div');
+    col.className = 'week-col';
+
+    const head = document.createElement('div');
+    head.className = 'week-col-head';
+    head.innerHTML = `
+      <span class="week-col-name">${dayLabels[i]}</span>
+      <span class="week-col-num ${isToday?'today':''} ${isSelected?'selected':''}">${date.getDate()}</span>`;
+    head.addEventListener('click', () => {
+      selectedDay = i;
+      setViewMode('day');
+    });
+    col.appendChild(head);
+
+    const track = document.createElement('div');
+    track.className = 'week-col-track';
+    track.style.minHeight = trackHeight + 'px';
+
+    const dayList = byDay[iso] || [];
+    const isPastOrToday = iso <= todayIso;
+
+    dayList.forEach(m => {
+      if (!m.start_time) return;
+      const parts = String(m.start_time).split(':');
+      const hh = Number(parts[0]); const mm = Number(parts[1] || '0');
+      if (!Number.isFinite(hh) || !Number.isFinite(mm)) return;
+      const totalMin = (hh - HOUR_START) * 60 + mm;
+      if (totalMin < 0 || totalMin > (HOUR_END - HOUR_START) * 60) return;
+      const top = (totalMin / 60) * HOUR_HEIGHT;
+
+      let passed = false;
+      if (m.marker_type === 'planned' && isPastOrToday) {
+        passed = (iso < todayIso) || (iso === todayIso && fmtTime(m.start_time) <= nowHM);
+      }
+
+      const dot = document.createElement('div');
+      dot.className = 'week-marker ' + m.marker_type + (passed ? ' passed' : '');
+      dot.style.top = (top - 6) + 'px';
+      if (m.marker_type === 'planned' && m.color) dot.style.background = escapeHtml(m.color);
+
+      const titleParts = [fmtTime(m.start_time)];
+      if (m.marker_type === 'planned' && m.title) titleParts.push(m.title);
+      else if (m.marker_type === 'audio') titleParts.push('Audiomarker');
+      else if (m.marker_type === 'compression') titleParts.push('Kompression');
+      else if (m.marker_type === 'anchor') titleParts.push(m.location_label || 'Anker');
+      dot.setAttribute('title', titleParts.join(' · '));
+
+      dot.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        openMarkerDetail(m);
+      });
+      track.appendChild(dot);
+    });
+
+    col.appendChild(track);
+    grid.appendChild(col);
+  }
+
+  wrap.appendChild(grid);
+}
+
+async function togglePlannedDone(m) {
+  const newVal = !m.is_done;
+  m.is_done = newVal;
+  renderTimeline();
+  if (newVal && ringPlannedTriggeredIds.has(m.id)) ringPlannedTriggeredIds.delete(m.id);
+  try {
+    const updated = await patchMarker(m.id, { is_done:newVal });
+    if (updated) Object.assign(m, updated);
+  } catch(e) {
+    m.is_done = !newVal;
+    renderTimeline();
+  }
+}
+
+function openMarkerSheet() { document.getElementById('marker-sheet').classList.add('open'); }
+function closeMarkerSheet() { document.getElementById('marker-sheet').classList.remove('open'); }
+
+function openPlanning(kind) {
+  plannedKind = normalizePlannedKind(kind);
+  goTo('s-planned');
+}
+
+async function createAnchor() {
+  closeMarkerSheet();
+  try {
+    const location = await captureLocationSnapshot();
+    await insertMarker({
+      marker_date: isoDate(dateForDay(selectedDay)),
+      start_time: nowTimeStr(),
+      marker_type: 'anchor',
+      source: 'app',
+      icon: 'list',
+      color: '#c4bca8',
+      ...(location || {})
+    });
+    await loadAndRenderTimeline();
+  } catch(e) {
+    alert('Anker konnte nicht gesetzt werden.\n' + String(e).slice(0,120));
+  }
+}
+
+async function createCompression() {
+  closeMarkerSheet();
+  try {
+    const location = await captureLocationSnapshot();
+    await insertMarker({
+      marker_date: isoDate(dateForDay(selectedDay)),
+      start_time: nowTimeStr(),
+      marker_type: 'compression',
+      source: 'app',
+      icon: 'list',
+      color: '#c08a7a',
+      sub: 'manuell protokolliert',
+      compression_seconds: APP_SETTINGS.compressionSeconds,
+      ...(location || {})
+    });
+    await loadAndRenderTimeline();
+  } catch(e) {
+    alert('Kompression konnte nicht protokolliert werden.\n' + String(e).slice(0,120));
+  }
+}
+
+function resetRecordUi() {
+  document.getElementById('record-state').textContent = 'Noch keine Aufnahme.';
+  document.getElementById('record-seconds').textContent = '00:00';
+  document.getElementById('record-start').disabled = false;
+  document.getElementById('record-stop').disabled = true;
+
+  if (recordPreviewUrl) {
+    URL.revokeObjectURL(recordPreviewUrl);
+    recordPreviewUrl = null;
+  }
+  const player = document.getElementById('audio-preview');
+  player.removeAttribute('src');
+  player.load();
+  document.getElementById('audio-preview-wrap').style.display = 'none';
+
+  recordBlob = null;
+  recordChunks = [];
+  recordSeconds = 0;
+  clearInterval(recordTimer);
+  clearTimeout(recordAutoStop);
+  recordTimer = null;
+  recordAutoStop = null;
+}
+
+function setRecordTimeLabel(seconds) {
+  const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const ss = String(seconds % 60).padStart(2, '0');
+  document.getElementById('record-seconds').textContent = `${mm}:${ss}`;
+}
+
+function updateAudioSaveEnabled() {
+  const transcript = document.getElementById('audio-transcript').value.trim();
+  const hasSummary = document.getElementById('audio-summary').value.trim().length > 0;
+  const canSave = Boolean(recordBlob || transcript || hasSummary);
+  document.getElementById('audio-save').disabled = !canSave;
+}
+
+function onAudioInput() {
+  updateAudioSaveEnabled();
+}
+
+function pickRecorderMimeType() {
+  if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') return '';
+  const candidates = ['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg'];
+  for (const type of candidates) {
+    if (MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return '';
+}
+
+async function startAudioRecording() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+    alert('Audio-Aufnahme wird auf diesem Gerät/Browservariant nicht unterstützt.');
+    return;
+  }
+
+  try {
+    if (mediaRecorder && mediaRecorder.state === 'recording') return;
+
+    recordChunks = [];
+    recordBlob = null;
+    if (recordPreviewUrl) {
+      URL.revokeObjectURL(recordPreviewUrl);
+      recordPreviewUrl = null;
+    }
+
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    const mimeType = pickRecorderMimeType();
+    mediaRecorder = mimeType ? new MediaRecorder(mediaStream, { mimeType }) : new MediaRecorder(mediaStream);
+
+    mediaRecorder.ondataavailable = ev => {
+      if (ev.data && ev.data.size > 0) recordChunks.push(ev.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      try {
+        const fallbackType = mediaRecorder && mediaRecorder.mimeType ? mediaRecorder.mimeType : 'audio/webm';
+        if (recordChunks.length > 0) {
+          recordBlob = new Blob(recordChunks, { type:fallbackType });
+          recordPreviewUrl = URL.createObjectURL(recordBlob);
+          const player = document.getElementById('audio-preview');
+          player.src = recordPreviewUrl;
+          document.getElementById('audio-preview-wrap').style.display = 'block';
+        }
+      } finally {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(t => t.stop());
+          mediaStream = null;
+        }
+        document.getElementById('record-start').disabled = false;
+        document.getElementById('record-stop').disabled = true;
+        document.getElementById('record-state').textContent = recordBlob ? 'Aufnahme bereit.' : 'Keine Audiodaten.';
+        updateAudioSaveEnabled();
+      }
+    };
+
+    mediaRecorder.start(1000);
+
+    document.getElementById('record-start').disabled = true;
+    document.getElementById('record-stop').disabled = false;
+    document.getElementById('record-state').textContent = 'Aufnahme läuft…';
+
+    recordSeconds = 0;
+    setRecordTimeLabel(recordSeconds);
+    clearInterval(recordTimer);
+    recordTimer = setInterval(() => {
+      recordSeconds += 1;
+      setRecordTimeLabel(recordSeconds);
+    }, 1000);
+
+    clearTimeout(recordAutoStop);
+    recordAutoStop = setTimeout(() => stopAudioRecording('auto'), 20000);
+  } catch(e) {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(t => t.stop());
+      mediaStream = null;
+    }
+    alert('Mikrofonzugriff fehlgeschlagen.\n' + String(e).slice(0,120));
+  }
+}
+
+async function stopAudioRecording(reason) {
+  clearInterval(recordTimer);
+  clearTimeout(recordAutoStop);
+  recordTimer = null;
+  recordAutoStop = null;
+
+  if (!mediaRecorder || mediaRecorder.state !== 'recording') {
+    if (reason === 'cancel' && mediaStream) {
+      mediaStream.getTracks().forEach(t => t.stop());
+      mediaStream = null;
+    }
+    return;
+  }
+
+  if (reason === 'auto') {
+    document.getElementById('record-state').textContent = 'Auto-Stop nach 20s…';
+  } else if (reason === 'cancel') {
+    document.getElementById('record-state').textContent = 'Aufnahme verworfen.';
+  } else {
+    document.getElementById('record-state').textContent = 'Stoppe Aufnahme…';
+  }
+
+  mediaRecorder.stop();
+}
+
+function leaveAudioScreen() {
+  stopAudioRecording('cancel').catch(()=>{});
+  goTo('s-main');
+}
+
+function prepareAudioScreen() {
+  resetRecordUi();
+  document.getElementById('audio-transcript').value = '';
+  document.getElementById('audio-summary').value = '';
+  document.getElementById('audio-time').value = nowTimeStr();
+  document.getElementById('audio-save').disabled = true;
+}
+
+function suggestTagsFromTranscript(transcript) {
+  const txt = (transcript || '').toLowerCase();
+  const tags = [];
+  const rules = [
+    { key:'arbeit', tag:'arbeit' },
+    { key:'meeting', tag:'arbeit' },
+    { key:'einkauf', tag:'einkauf' },
+    { key:'laden', tag:'einkauf' },
+    { key:'stress', tag:'stress' },
+    { key:'ruhe', tag:'ruhe' },
+    { key:'familie', tag:'familie' },
+    { key:'gesund', tag:'gesundheit' }
+  ];
+
+  rules.forEach(rule => {
+    if (txt.includes(rule.key) && !tags.includes(rule.tag)) tags.push(rule.tag);
+  });
+
+  return tags.slice(0, 3);
+}
+
+async function saveAudioMarker() {
+  const transcript = document.getElementById('audio-transcript').value.trim();
+  const summary = document.getElementById('audio-summary').value.trim();
+  const time = document.getElementById('audio-time').value || nowTimeStr();
+  const btn = document.getElementById('audio-save');
+
+  if (!recordBlob && !transcript && !summary) {
+    alert('Bitte erst aufnehmen oder Text eingeben.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Speichert…';
+
+  try {
+    const markerDate = isoDate(dateForDay(selectedDay));
+    const location = await captureLocationSnapshot();
+    const audioPath = recordBlob ? await uploadAudioBlob(recordBlob, markerDate, time) : null;
+    const tags = suggestTagsFromTranscript(transcript);
+
+    await insertMarker({
+      marker_date: markerDate,
+      start_time: time,
+      marker_type: 'audio',
+      source: 'app',
+      transcript: transcript || null,
+      summary: summary || null,
+      tags,
+      audio_path: audioPath,
+      icon: 'mail',
+      color: '#b89668',
+      ...(location || {})
+    });
+
+    goTo('s-main');
+  } catch(e) {
+    alert('Audiomarker konnte nicht gespeichert werden.\n' + String(e).slice(0,160));
+    btn.disabled = false;
+    btn.textContent = 'Speichern';
+  }
+}
+
+function preparePlannedScreen() {
+  document.getElementById('planned-title').value = '';
+  document.getElementById('planned-note').value = '';
+  document.getElementById('planned-time').value = '';
+  document.getElementById('planned-compression-seconds').value = String(APP_SETTINGS.compressionSeconds);
+  document.getElementById('planned-repeat-interval').value = String(APP_SETTINGS.repeatIntervalMinutes);
+  document.getElementById('planned-save').disabled = true;
+  updatePlannedKindUi();
+  updatePlannedCopy();
+}
+
+function setPlannedKind(kind) {
+  plannedKind = normalizePlannedKind(kind);
+  updatePlannedKindUi();
+  updatePlannedCopy();
+  onPlannedInput();
+}
+
+function updatePlannedKindUi() {
+  const kind = normalizePlannedKind(plannedKind);
+  const terminBtn = document.getElementById('planned-kind-termin');
+  const ereignisBtn = document.getElementById('planned-kind-ereignis');
+  if (terminBtn) terminBtn.classList.toggle('active', kind === 'termin');
+  if (ereignisBtn) ereignisBtn.classList.toggle('active', kind === 'ereignis');
+}
+
+function updatePlannedCopy() {
+  const kind = normalizePlannedKind(plannedKind);
+  const titleInput = document.getElementById('planned-title');
+  const noteInput = document.getElementById('planned-note');
+
+  if (titleInput) {
+    titleInput.placeholder = kind === 'ereignis'
+      ? 'z. B. Teamabend, Elternabend, Workshop'
+      : 'z. B. Einkauf, Anruf, Arzttermin';
+  }
+  if (noteInput) {
+    noteInput.placeholder = kind === 'ereignis'
+      ? 'Optional: Ort, Beteiligte, Ablauf.'
+      : 'Optional: Zweck, Kontext, was vorbereitet sein soll.';
+  }
+}
+
+function onPlannedInput() {
+  const title = document.getElementById('planned-title').value.trim();
+  const time = document.getElementById('planned-time').value;
+  document.getElementById('planned-save').disabled = !(title && time);
+}
+
+async function savePlannedMarker() {
+  const title = document.getElementById('planned-title').value.trim();
+  const note = document.getElementById('planned-note').value.trim();
+  const time = document.getElementById('planned-time').value;
+  const compressionSeconds = clampNumber(document.getElementById('planned-compression-seconds').value, 10, 60, APP_SETTINGS.compressionSeconds);
+  const repeatInterval = clampNumber(document.getElementById('planned-repeat-interval').value, 0, 240, APP_SETTINGS.repeatIntervalMinutes);
+  const kind = normalizePlannedKind(plannedKind);
+  const isEvent = kind === 'ereignis';
+  const btn = document.getElementById('planned-save');
+
+  btn.disabled = true;
+  btn.textContent = 'Speichert…';
+
+  try {
+    await insertMarker({
+      marker_date: isoDate(dateForDay(selectedDay)),
+      start_time: time,
+      title,
+      marker_type: 'planned',
+      source: 'app',
+      icon: isEvent ? 'event' : 'alarm',
+      color: isEvent ? '#94b2a1' : '#b5c5d5',
+      sub: kind,
+      note: note || null,
+      tags: [kind],
+      compression_seconds: compressionSeconds,
+      repeat_interval_minutes: repeatInterval > 0 ? repeatInterval : null,
+      repeat: repeatInterval > 0
+    });
+
+    goTo('s-main');
+  } catch(e) {
+    alert('Geplanter Marker konnte nicht gespeichert werden.\n' + String(e).slice(0,120));
+    btn.disabled = false;
+    btn.textContent = 'Speichern';
+  }
+}
+
+function markerTypeTitle(type, marker) {
+  if (type === 'audio') return 'Audiomarker';
+  if (type === 'anchor') return 'Anker';
+  if (type === 'compression') return 'Kompression';
+  if (type === 'planned') return plannedKindLabel(plannedKindFromMarker(marker || {}));
+  return 'Marker';
+}
+
+function markerDetailSummaryText(m) {
+  if (m.marker_type === 'anchor') {
+    return 'Anker bleibt bewusst knapp. Zeit und optionaler Ort werden festgehalten, Inhalt bleibt leer.';
+  }
+  if (m.marker_type === 'compression') {
+    const sec = Number.isFinite(Number(m.compression_seconds)) ? `${Number(m.compression_seconds)}s` : 'Standard';
+    return `Kompression protokolliert. Dauer: ${sec}. ${m.sub ? `Hinweis: ${m.sub}` : ''}`.trim();
+  }
+  if (m.marker_type === 'planned') {
+    const repeatTxt = m.repeat_interval_minutes ? `Wiederholung alle ${m.repeat_interval_minutes} Min.` : 'Keine Wiederholung.';
+    const sec = Number.isFinite(Number(m.compression_seconds)) ? `${Number(m.compression_seconds)}s` : '30s';
+    const kindLabel = plannedKindLabel(plannedKindFromMarker(m));
+    const detailTxt = m.note ? ` Details: ${m.note}` : '';
+    return `${kindLabel} "${m.title || 'Ohne Titel'}". Druckaufbau ${sec}. ${repeatTxt}${detailTxt}`;
+  }
+  return 'Markerdetails';
+}
+
+async function openMarkerDetail(m) {
+  detailMarker = { ...m };
+  detailTags = [...(m.tags || [])];
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-marker-detail').classList.add('active');
+
+  const heading = document.getElementById('detail-heading');
+  const typeTitle = markerTypeTitle(m.marker_type, m);
+  heading.innerHTML = `<span class="accent">${typeTitle.slice(0,5)}</span>${typeTitle.slice(5)}`;
+
+  const location = m.location_label ? ` · ${escapeHtml(m.location_label)}` : '';
+  document.getElementById('detail-meta').innerHTML = `${escapeHtml(isoDate(dateForDay(selectedDay)))} · ${escapeHtml(fmtTime(m.start_time))}${location}`;
+
+  const isAudio = m.marker_type === 'audio';
+  document.getElementById('detail-audio-wrap').style.display = isAudio ? 'block' : 'none';
+  document.getElementById('detail-transcript-wrap').style.display = isAudio ? 'block' : 'none';
+  document.getElementById('detail-summary-wrap').style.display = isAudio ? 'block' : 'none';
+  document.getElementById('detail-tags-wrap').style.display = isAudio ? 'block' : 'none';
+  document.getElementById('detail-save').style.display = isAudio ? 'inline-flex' : 'none';
+  document.getElementById('detail-non-audio-wrap').style.display = isAudio ? 'none' : 'block';
+
+  if (isAudio) {
+    document.getElementById('detail-transcript').value = m.transcript || '';
+    document.getElementById('detail-summary').value = m.summary || '';
+    renderDetailTags();
+
+    const player = document.getElementById('detail-audio-player');
+    const empty = document.getElementById('detail-audio-empty');
+    player.removeAttribute('src');
+    player.style.display = 'none';
+    empty.style.display = 'block';
+
+    try {
+      const src = m.audio_path ? await createSignedAudioUrl(m.audio_path) : (m.audio_url || null);
+      if (src) {
+        player.src = src;
+        player.style.display = 'block';
+        empty.style.display = 'none';
+      }
+    } catch(e) {
+      empty.textContent = 'Audio konnte nicht geladen werden.';
+      empty.style.display = 'block';
+    }
+  } else {
+    document.getElementById('detail-non-audio-text').textContent = markerDetailSummaryText(m);
+  }
+}
+
+function renderDetailTags() {
+  const row = document.getElementById('detail-tags-row');
+  row.querySelectorAll('.detail-tag-chip').forEach(node => node.remove());
+  const input = document.getElementById('detail-tag-input');
+
+  detailTags.forEach((tag, idx) => {
+    const chip = document.createElement('span');
+    chip.className = 'detail-tag-chip';
+    chip.innerHTML = `${escapeHtml(tag)}<span class="remove">×</span>`;
+    chip.querySelector('.remove').onclick = () => {
+      detailTags.splice(idx, 1);
+      renderDetailTags();
+    };
+    row.insertBefore(chip, input);
+  });
+}
+
+function addDetailTagFromInput() {
+  const input = document.getElementById('detail-tag-input');
+  const value = input.value.trim().toLowerCase();
+  if (value && !detailTags.includes(value)) {
+    detailTags.push(value);
+    renderDetailTags();
+  }
+  input.value = '';
+}
+
+async function saveMarkerDetail() {
+  if (!detailMarker || detailMarker.marker_type !== 'audio') return;
+
+  addDetailTagFromInput();
+
+  const transcript = document.getElementById('detail-transcript').value.trim();
+  const summary = document.getElementById('detail-summary').value.trim();
+  const btn = document.getElementById('detail-save');
+  btn.disabled = true;
+  btn.textContent = 'Speichert…';
+
+  try {
+    const updated = await patchMarker(detailMarker.id, {
+      transcript: transcript || null,
+      summary: summary || null,
+      tags: detailTags
+    });
+
+    if (updated) {
+      detailMarker = { ...updated };
+      const idx = dayMarkers.findIndex(x => x.id === updated.id);
+      if (idx >= 0) dayMarkers[idx] = { ...updated };
+      renderTimeline();
+    }
+
+    btn.textContent = 'Gespeichert';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = 'Marker speichern';
+    }, 800);
+  } catch(e) {
+    alert('Marker konnte nicht gespeichert werden.\n' + String(e).slice(0,120));
+    btn.disabled = false;
+    btn.textContent = 'Marker speichern';
+  }
+}
+
+async function openNoteForMarker(marker) {
+  if (!allNotes.length) {
+    try { allNotes = await fetchNotes(); } catch(e) { allNotes = []; }
+  }
+
+  const existing = allNotes.find(n => n.marker_id === marker.id);
+  if (existing) openNoteEdit(existing);
+  else openNewNote({ marker });
+}
+
+function openNoteFromDetail() {
+  if (!detailMarker) return;
+  openNoteForMarker(detailMarker);
+}
+
+function setNoteSttStatus(text, isError) {
+  const el = document.getElementById('note-stt-status');
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = isError ? '#b85555' : 'var(--text-secondary)';
+}
+
+function resetNoteSttUi() {
+  const recBtn = document.getElementById('note-stt-record');
+  const stopBtn = document.getElementById('note-stt-stop');
+  const transBtn = document.getElementById('note-stt-transcribe');
+  const audioEl = document.getElementById('note-stt-audio');
+
+  if (recBtn) recBtn.disabled = false;
+  if (stopBtn) stopBtn.disabled = true;
+  if (transBtn) transBtn.disabled = !noteSttBlob;
+
+  if (audioEl) {
+    if (noteSttPreviewUrl) {
+      audioEl.src = noteSttPreviewUrl;
+      audioEl.style.display = 'block';
+    } else {
+      audioEl.removeAttribute('src');
+      audioEl.style.display = 'none';
+    }
+  }
+
+  if (!noteSttBlob) setNoteSttStatus('Sprachaufnahme für Notizen (optional).', false);
+}
+
+async function startNoteSttRecording() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined') {
+    setNoteSttStatus('Mikrofonaufnahme wird auf diesem Gerät nicht unterstützt.', true);
+    return;
+  }
+
+  try {
+    if (noteSttRecorder && noteSttRecorder.state === 'recording') return;
+
+    noteSttChunks = [];
+    noteSttBlob = null;
+
+    if (noteSttPreviewUrl) {
+      URL.revokeObjectURL(noteSttPreviewUrl);
+      noteSttPreviewUrl = null;
+    }
+
+    noteSttStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    const mimeType = pickRecorderMimeType();
+    noteSttRecorder = mimeType ? new MediaRecorder(noteSttStream, { mimeType }) : new MediaRecorder(noteSttStream);
+
+    noteSttRecorder.ondataavailable = ev => {
+      if (ev.data && ev.data.size > 0) noteSttChunks.push(ev.data);
+    };
+
+    noteSttRecorder.onstop = () => {
+      const finalType = (noteSttRecorder && noteSttRecorder.mimeType) ? noteSttRecorder.mimeType : 'audio/webm';
+      if (noteSttChunks.length > 0) {
+        noteSttBlob = new Blob(noteSttChunks, { type: finalType });
+        noteSttPreviewUrl = URL.createObjectURL(noteSttBlob);
+        setNoteSttStatus('Aufnahme bereit. Jetzt transkribieren.', false);
+      } else {
+        setNoteSttStatus('Keine Audiodaten aufgenommen.', true);
+      }
+
+      if (noteSttStream) {
+        noteSttStream.getTracks().forEach(t => t.stop());
+        noteSttStream = null;
+      }
+      resetNoteSttUi();
+    };
+
+    noteSttRecorder.start(1000);
+    document.getElementById('note-stt-record').disabled = true;
+    document.getElementById('note-stt-stop').disabled = false;
+    document.getElementById('note-stt-transcribe').disabled = true;
+    setNoteSttStatus('Aufnahme läuft…', false);
+  } catch(e) {
+    if (noteSttStream) {
+      noteSttStream.getTracks().forEach(t => t.stop());
+      noteSttStream = null;
+    }
+    setNoteSttStatus(`Mikrofonfehler: ${String(e).slice(0,80)}`, true);
+  }
+}
+
+async function stopNoteSttRecording(reason) {
+  if (!noteSttRecorder || noteSttRecorder.state !== 'recording') {
+    if (reason === 'cancel' && noteSttStream) {
+      noteSttStream.getTracks().forEach(t => t.stop());
+      noteSttStream = null;
+    }
+    return;
+  }
+
+  if (reason === 'cancel') {
+    noteSttChunks = [];
+    noteSttBlob = null;
+    if (noteSttPreviewUrl) {
+      URL.revokeObjectURL(noteSttPreviewUrl);
+      noteSttPreviewUrl = null;
+    }
+    setNoteSttStatus('Aufnahme verworfen.', false);
+  } else {
+    setNoteSttStatus('Aufnahme stoppt…', false);
+  }
+
+  noteSttRecorder.stop();
+}
+
+function noteBlobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '');
+      const part = dataUrl.split(',')[1] || '';
+      resolve(part);
+    };
+    reader.onerror = () => reject(reader.error || new Error('Datei konnte nicht gelesen werden'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function transcribeNoteStt() {
+  if (!noteSttBlob) {
+    setNoteSttStatus('Bitte zuerst eine Aufnahme erstellen.', true);
+    return;
+  }
+
+  const transBtn = document.getElementById('note-stt-transcribe');
+  transBtn.disabled = true;
+  setNoteSttStatus('Transkribiere mit OpenAI…', false);
+
+  try {
+    const audioBase64 = await noteBlobToBase64(noteSttBlob);
+    const ext = mimeToExtension(noteSttBlob.type || 'audio/webm');
+    const payload = {
+      audioBase64,
+      mimeType: noteSttBlob.type || 'audio/webm',
+      fileName: `note-${Date.now()}.${ext}`,
+      language: 'de'
+    };
+
+    const res = await fetch('/api/transcribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json().catch(()=>({}));
+    if (!res.ok || !data.text) {
+      const msg = data && data.error ? data.error : `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+
+    const text = String(data.text || '').trim();
+    if (!text) throw new Error('Leeres Transkript erhalten');
+
+    const area = document.getElementById('note-content');
+    area.value = area.value.trim()
+      ? `${area.value.trim()}\n\n${text}`
+      : text;
+
+    setNoteSttStatus('Transkript eingefügt.', false);
+  } catch(e) {
+    setNoteSttStatus(`Transkription fehlgeschlagen: ${String(e).slice(0,120)}`, true);
+  } finally {
+    transBtn.disabled = false;
+  }
+}
+
+async function loadAndRenderNotes() {
+  const scroll = document.getElementById('notes-scroll');
+  scroll.innerHTML = '<div class="notes-empty">Lädt…</div>';
+  try {
+    allNotes = await fetchNotes();
+    renderNotes();
+  } catch(e) {
+    scroll.innerHTML = `<div class="notes-empty">Verbindung fehlgeschlagen.<br><small>${escapeHtml(String(e).slice(0,120))}</small></div>`;
+  }
+}
+
+function renderNotes() {
+  const scroll = document.getElementById('notes-scroll');
+  scroll.innerHTML = '';
+
+  if (!allNotes.length) {
+    scroll.innerHTML = '<div class="notes-empty">Noch keine Notizen.<br><small>Marker halten den Moment, Notizen tragen seine Bedeutung.</small></div>';
+    return;
+  }
+
+  allNotes.forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'note-card';
+    const hasTitle = n.title && n.title.trim();
+    const tagsHtml = (n.tags || []).map(t => `<span class="tl-tag">${escapeHtml(t)}</span>`).join('');
+
+    card.innerHTML = `
+      <div class="note-meta">
+        <span>${escapeHtml(relativeDate(n.updated_at || n.created_at))}</span>
+        ${n.marker_id ? '<span class="note-linked">verknüpft</span>' : ''}
+      </div>
+      <div class="note-title ${hasTitle ? '' : 'untitled'}">${hasTitle ? escapeHtml(n.title) : 'Ohne Titel'}</div>
+      ${n.content ? `<div class="note-content">${escapeHtml(n.content)}</div>` : ''}
+      ${tagsHtml ? `<div class="note-tags">${tagsHtml}</div>` : ''}`;
+
+    card.onclick = () => openNoteEdit(n);
+    scroll.appendChild(card);
+  });
+}
+
+function openNewNote(ctx) {
+  stopNoteSttRecording('cancel').catch(()=>{});
+  editingNote = null;
+  currentTags = [];
+  currentMarkerLink = (ctx && ctx.marker) ? ctx.marker : null;
+
+  document.getElementById('note-title').value = '';
+  document.getElementById('note-content').value = (ctx && ctx.marker && ctx.marker.transcript) ? ctx.marker.transcript : '';
+  document.getElementById('note-delete-btn').style.display = 'none';
+
+  updateLinkedBanner();
+  renderTagChips();
+  noteSttBlob = null;
+  if (noteSttPreviewUrl) {
+    URL.revokeObjectURL(noteSttPreviewUrl);
+    noteSttPreviewUrl = null;
+  }
+  resetNoteSttUi();
+  goTo('s-note-edit');
+  setTimeout(() => document.getElementById('note-content').focus(), 80);
+}
+
+function openNoteEdit(note) {
+  stopNoteSttRecording('cancel').catch(()=>{});
+  editingNote = note;
+  currentTags = [...(note.tags || [])];
+  currentMarkerLink = null;
+
+  document.getElementById('note-title').value = note.title || '';
+  document.getElementById('note-content').value = note.content || '';
+  document.getElementById('note-delete-btn').style.display = 'block';
+
+  updateLinkedBanner();
+  renderTagChips();
+  noteSttBlob = null;
+  if (noteSttPreviewUrl) {
+    URL.revokeObjectURL(noteSttPreviewUrl);
+    noteSttPreviewUrl = null;
+  }
+  resetNoteSttUi();
+  goTo('s-note-edit');
+}
+
+function closeNoteEdit() {
+  stopNoteSttRecording('cancel').catch(()=>{});
+  editingNote = null;
+  currentTags = [];
+  currentMarkerLink = null;
+  noteSttBlob = null;
+  if (noteSttPreviewUrl) {
+    URL.revokeObjectURL(noteSttPreviewUrl);
+    noteSttPreviewUrl = null;
+  }
+  goTo('s-notes');
+}
+
+function updateLinkedBanner() {
+  const banner = document.getElementById('note-linked-banner');
+  const linkedMarker = currentMarkerLink || (editingNote && dayMarkers.find(m => m.id === editingNote.marker_id));
+  const linkedId = currentMarkerLink ? currentMarkerLink.id : (editingNote && editingNote.marker_id);
+
+  if (!linkedId) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  banner.style.display = 'block';
+  const time = linkedMarker && linkedMarker.start_time ? ` ${fmtTime(linkedMarker.start_time)}` : '';
+  banner.textContent = `Verknüpft mit Marker${time}`;
+}
+
+function renderTagChips() {
+  const row = document.getElementById('note-tags-row');
+  row.querySelectorAll('.tag-chip').forEach(n => n.remove());
+  const input = document.getElementById('note-tag-input');
+
+  currentTags.forEach((t, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.innerHTML = `${escapeHtml(t)}<span class="remove">×</span>`;
+    chip.querySelector('.remove').onclick = () => { currentTags.splice(i,1); renderTagChips(); };
+    row.insertBefore(chip, input);
+  });
+}
+
+function addTagFromInput() {
+  const input = document.getElementById('note-tag-input');
+  const value = input.value.trim().toLowerCase();
+  if (value && !currentTags.includes(value)) {
+    currentTags.push(value);
+    renderTagChips();
+  }
+  input.value = '';
+}
+
+async function saveNote() {
+  addTagFromInput();
+
+  const title = document.getElementById('note-title').value.trim();
+  const content = document.getElementById('note-content').value;
+  const btn = document.getElementById('note-save');
+
+  btn.disabled = true;
+  btn.textContent = 'Speichert…';
+
+  try {
+    if (editingNote) {
+      await patchNote(editingNote.id, { title:title || null, content, tags:currentTags });
+    } else {
+      await insertNote({
+        title: title || null,
+        content,
+        tags: currentTags,
+        marker_id: currentMarkerLink ? currentMarkerLink.id : null
+      });
+    }
+
+    closeNoteEdit();
+    loadAndRenderNotes();
+  } catch(e) {
+    alert('Notiz konnte nicht gespeichert werden.\n' + String(e).slice(0,120));
+    btn.disabled = false;
+    btn.textContent = 'Speichern';
+  }
+}
+
+async function deleteNote() {
+  if (!editingNote) return;
+  if (!confirm('Notiz wirklich löschen?')) return;
+
+  try {
+    await deleteNoteById(editingNote.id);
+    closeNoteEdit();
+    loadAndRenderNotes();
+  } catch(e) {
+    alert('Löschen fehlgeschlagen.\n' + String(e).slice(0,120));
+  }
+}
+
+function prepareSettingsScreen() {
+  document.getElementById('settings-compression-seconds').value = String(APP_SETTINGS.compressionSeconds);
+  document.getElementById('settings-repeat-interval').value = String(APP_SETTINGS.repeatIntervalMinutes);
+  document.getElementById('ring-service-uuid').value = APP_SETTINGS.ringServiceUuid;
+  document.getElementById('ring-notify-char').value = APP_SETTINGS.ringNotifyCharUuid;
+  document.getElementById('ring-write-char').value = APP_SETTINGS.ringWriteCharUuid;
+  document.getElementById('settings-compression-value').textContent = `${APP_SETTINGS.compressionSeconds}s`;
+  updateRingStatusUi(ringConnection.connected ? ringConnection.deviceName : '');
+  if (!document.getElementById('ring-log').textContent.trim()) {
+    ringLog('Ring bereit. UUIDs prüfen und Verbinden starten.');
+  }
+  document.getElementById('settings-email').textContent = (AUTH.user && AUTH.user.email) ? AUTH.user.email : '-';
+  document.getElementById('version-foot').textContent = `AURUM ${APP_VERSION}`;
+  applyAdminVisibility();
+}
+
+function onSettingsInput() {
+  APP_SETTINGS.compressionSeconds = clampNumber(document.getElementById('settings-compression-seconds').value, 10, 60, APP_SETTINGS.compressionSeconds);
+  APP_SETTINGS.repeatIntervalMinutes = clampNumber(document.getElementById('settings-repeat-interval').value, 0, 240, APP_SETTINGS.repeatIntervalMinutes);
+  APP_SETTINGS.ringServiceUuid = sanitizeUuid(document.getElementById('ring-service-uuid').value, DEFAULT_SETTINGS.ringServiceUuid);
+  APP_SETTINGS.ringNotifyCharUuid = sanitizeUuid(document.getElementById('ring-notify-char').value, DEFAULT_SETTINGS.ringNotifyCharUuid);
+  APP_SETTINGS.ringWriteCharUuid = sanitizeUuid(document.getElementById('ring-write-char').value, DEFAULT_SETTINGS.ringWriteCharUuid);
+  document.getElementById('settings-compression-value').textContent = `${APP_SETTINGS.compressionSeconds}s`;
+  saveAppSettings().catch(()=>{});
+}
+
+async function logoutFromSettings() {
+  await disconnectRing();
+  await signOut();
+  showLoginScreen();
+}
+
+/* ─── ADMIN-/PRAESENTATIONSMODUS (v0.06) ─── */
+const ADMIN_MODE_KEY = 'aurum_admin_mode';
+
+function isAdminMode() {
+  try {
+    const v = localStorage.getItem(ADMIN_MODE_KEY);
+    return v === null ? true : v === '1';
+  } catch (e) { return true; }
+}
+
+function applyAdminVisibility() {
+  const on = isAdminMode();
+  document.body.classList.toggle('admin-mode', on);
+  const btn = document.getElementById('admin-toggle-btn');
+  if (btn) btn.textContent = on ? 'AN' : 'AUS';
+}
+
+function onAdminToggle() {
+  const next = !isAdminMode();
+  try { localStorage.setItem(ADMIN_MODE_KEY, next ? '1' : '0'); } catch (e) {}
+  applyAdminVisibility();
+}
+
+/* ─── GERAETE-RESET (v0.06) ─── */
+async function resetDeviceState() {
+  const ok = confirm('Diesen Vorgang wirklich ausfuehren?\n\nAURUM startet beim naechsten Oeffnen wie neu. Deine Daten in Supabase bleiben erhalten.');
+  if (!ok) return;
+  try {
+    await storage.del('aurum_session');
+    localStorage.removeItem(ADMIN_MODE_KEY);
+    localStorage.removeItem('aurum_onboarded');
+    AUTH = { access_token:null, refresh_token:null, user:null };
+  } catch (e) { /* continue regardless */ }
+  location.reload();
+}
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  if (location.protocol === 'file:') return;
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('Service Worker konnte nicht registriert werden:', err);
+    });
+  });
+}
+
+(async () => {
+  APP_SETTINGS = await loadAppSettings();
+  applyFeatureVisibility();
+  applyAdminVisibility();
+  registerServiceWorker();
+
+  if (await loadSession()) {
+    await enterApp();
+  } else {
+    showLoginScreen();
+  }
+})();
+</script>
+</body>
+</html>
