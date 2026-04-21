@@ -4,6 +4,7 @@ Automatisch erzeugte Vollinventur aller versionierten Dateien mit Zielvorschlag.
 
 | Datei | Bereich | Ziel (Vorschlag) | Aktion |
 |---|---|---|---|
+| `"AURUM v4 \302\267 Plan + Anker.html"` | Sonstiges | `"AURUM v4 \302\267 Plan + Anker.html"` | evaluieren |
 | `.babelrc` | Sonstiges | `.babelrc` | evaluieren |
 | `.eslintignore` | Sonstiges | `.eslintignore` | evaluieren |
 | `.eslintrc.js` | Tooling/Legacy | `.eslintrc.js` | evaluieren |
@@ -26,7 +27,6 @@ Automatisch erzeugte Vollinventur aller versionierten Dateien mit Zielvorschlag.
 | `ARGENTUM/components/SessionPanel.tsx` | Feature/Flatmode | `AURUM/src/modules/argentum/components/SessionPanel.tsx` | migrieren |
 | `ARGENTUM/components/SessionTimer.tsx` | Feature/Flatmode | `AURUM/src/modules/argentum/components/SessionTimer.tsx` | migrieren |
 | `ARGENTUM/types.ts` | Feature/Flatmode | `AURUM/src/modules/argentum/types.ts` | migrieren |
-| `"AURUM v4 \302\267 Plan + Anker.html"` | Sonstiges | `"AURUM v4 \302\267 Plan + Anker.html"` | evaluieren |
 | `AURUM.bat` | Launcher | `AURUM.bat` | behalten |
 | `AURUM/Archive.tsx` | Main-AURUM | `AURUM/Archive.tsx` | behalten/refactor |
 | `AURUM/AurumCore.tsx` | Main-AURUM | `AURUM/AurumCore.tsx` | behalten/refactor |
@@ -161,6 +161,7 @@ Automatisch erzeugte Vollinventur aller versionierten Dateien mit Zielvorschlag.
 | `index_for_react_app.js` | Tooling/Legacy | `index_for_react_app.js` | evaluieren |
 | `main.tsx` | App-Entry | `AURUM/src/main.tsx` | migrieren |
 | `markers-api.ts` | Domain-Lib | `AURUM/src/lib/markers-api.ts` | migrieren |
+| `migration/FULL_MIGRATION_MATRIX.md` | Assets/Doku | `migration/FULL_MIGRATION_MATRIX.md` | behalten/einordnen |
 | `migration/unsorted-root/.gitkeep` | Sonstiges | `migration/unsorted-root/.gitkeep` | evaluieren |
 | `mocks/fileMock.js` | Tooling/Legacy | `mocks/fileMock.js` | evaluieren |
 | `mocks/localStorageMock.js` | Tooling/Legacy | `mocks/localStorageMock.js` | evaluieren |
