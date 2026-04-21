@@ -5,10 +5,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Circle, Plus, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Repeat, Check, Grid3x3, Square, AudioWaveform, ChevronsRightLeft, Anchor } from 'lucide-react';
+import { Circle, ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Repeat, Check, Grid3x3, Square, AudioWaveform, ChevronsRightLeft, Anchor } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { MARKER_TYPE_COLORS, MARKER_TYPE_LABELS } from './markers-api';
-import { useAdminMode } from './useAdminMode';
 import type { Marker } from './types';
 
 function markerColor(marker: Marker): string {
@@ -30,15 +29,12 @@ interface TimelineProps {
   markers: Marker[];
   onMarkerClick?: (marker: Marker) => void;
   onCreateMarker: () => void;
-  onCreateAnchor?: () => void | Promise<void>;
   isAuthenticated?: boolean;
 }
 
 type ViewMode = 'day' | 'week';
 
-export function Timeline({ markers, onMarkerClick, onCreateMarker, onCreateAnchor, isAuthenticated }: TimelineProps) {
-  const [adminMode] = useAdminMode();
-  const showAnchorButton = adminMode && isAuthenticated && !!onCreateAnchor;
+export function Timeline({ markers, onMarkerClick, onCreateMarker, isAuthenticated }: TimelineProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('day');
@@ -163,7 +159,10 @@ export function Timeline({ markers, onMarkerClick, onCreateMarker, onCreateAncho
       {/* Header */}
       <div className="p-3 md:p-6 border-b border-amber-200/50">
         <div className="flex items-center justify-between mb-3 md:mb-4 gap-2">
-          <h2 className="text-lg md:text-2xl font-light text-gray-800">Timeline</h2>
+          <div>
+            <h2 className="text-lg md:text-2xl font-light text-gray-800">Planung &amp; Protokoll</h2>
+            <p className="text-[11px] md:text-xs text-gray-500 mt-0.5">Timeline-Ansicht</p>
+          </div>
           <div className="flex items-center gap-2">
             {/* View Mode Toggle */}
             <div className="flex items-center gap-1 bg-white rounded-lg p-1 border border-amber-200/50">
@@ -187,30 +186,6 @@ export function Timeline({ markers, onMarkerClick, onCreateMarker, onCreateAncho
               </Button>
             </div>
 
-            {/* Admin-only: Anker manuell setzen (ersatz fuer Armreif-Trigger) */}
-            {showAnchorButton && (
-              <Button
-                onClick={() => onCreateAnchor?.()}
-                size="sm"
-                variant="outline"
-                title="Anker jetzt setzen (Admin-Modus)"
-                className="border-2"
-                style={{ borderColor: '#b85555', color: '#b85555' }}
-              >
-                <Anchor className="w-4 h-4 md:mr-1" />
-                <span className="hidden md:inline">Anker</span>
-              </Button>
-            )}
-
-            {/* "+ Marker" nur Desktop — Mobile nutzt FAB */}
-            <Button
-              onClick={onCreateMarker}
-              size="sm"
-              className="hidden md:inline-flex bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 shadow-md"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Marker
-            </Button>
           </div>
         </div>
 
@@ -444,17 +419,20 @@ function MarkerRow({ marker, isToday, isPast, nowHM, onClick }: MarkerRowProps) 
         {/* Bubble */}
         {isAnchor ? (
           <div
-            className="absolute rounded-full transition-transform group-hover:scale-110"
+            className="absolute flex items-center justify-center text-white transition-transform group-hover:scale-105"
             style={{
-              left: '10px',
-              top: '18px',
-              width: '20px',
-              height: '20px',
+              left: 0,
+              top: '8px',
+              width: '40px',
+              height: '40px',
+              borderRadius: '14px',
               background: '#b85555',
-              boxShadow: '0 1px 3px rgba(184,85,85,0.35)',
+              boxShadow: '0 2px 6px rgba(46,40,32,0.12)',
               zIndex: 1,
             }}
-          />
+          >
+            <Anchor className="w-[18px] h-[18px]" />
+          </div>
         ) : (
           <div
             className={`absolute flex items-center justify-center text-white transition-transform group-hover:scale-105 ${passed ? 'opacity-85' : ''}`}

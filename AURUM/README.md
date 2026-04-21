@@ -1,5 +1,8 @@
 # AURUM - Timeline & Notizen System
 
+> Status 2026-04: **AURUM ist die Haupt-App (ex-CUPRUM-Stand)**.
+> Der Ordner `CUPRUM/` ist derzeit als leeres Werkstatt-Template reserviert.
+
 ## Konzept
 
 AURUM integriert **zwei zentrale Ebenen**, die über **Tags** miteinander verbunden sind:
