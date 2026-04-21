@@ -1,11 +1,12 @@
 @echo off
 setlocal
 title AURUM (V0.1 React/TSX)
-cd /d "%~dp0AURUM"
+set "AURUM_HOST=aurum.me.marcodemont.ch"
+cd /d "%~dp0"
 
 if not exist "package.json" (
-    echo [Fehler] AURUM\package.json nicht gefunden.
-    echo Erwartet wird der Ordner "AURUM\" mit package.json, vite.config.ts etc.
+    echo [Fehler] package.json nicht gefunden.
+    echo Erwartet wird das Projekt-Root mit package.json und vite.config.ts.
     pause
     exit /b 1
 )
@@ -77,7 +78,7 @@ if "%TUNNEL_AVAILABLE%"=="1" (
     if "%TUNNEL_CONFIGURED%"=="1" (
         echo.
         echo  Internet ^(HTTPS, Mikro/Geo OK^):
-        echo    https://aurum.marcodemont.ch/
+        echo    https://%AURUM_HOST%/
         echo.
         echo  Starte Cloudflare-Tunnel 'aurum' in separatem Fenster...
         start "AURUM Cloudflare Tunnel" cmd /k cloudflared tunnel --config "%USERPROFILE%\.cloudflared\aurum.yml" run aurum
