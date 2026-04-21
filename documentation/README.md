@@ -37,6 +37,12 @@ klar trennt.
 └── README.md                   # diese Datei
 ```
 
+## Aktive Versionsdokumente
+
+- `AURUMv0.11.md` -> Arbeitsgrundlage fuer Modul- und Konzeptangleichung
+- `AURUMv0.12.md` -> GitHub-/Struktur-Release (Migrationsbasis)
+- `CHANGELOG.md` -> fortlaufender Versionsverlauf
+
 ## Schnellstart
 
 ### App lokal oeffnen (Windows)

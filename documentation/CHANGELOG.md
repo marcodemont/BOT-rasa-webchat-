@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## v0.12
+
+- **Struktur-Release nach v0.11.** Zielpfad `AURUM/src/modules/aurum/`
+  im Repo physisch aufgebaut und mit den zentralen Moduldateien
+  befuellt.
+- **AURUM/CUPRUM-Scaffold angelegt.** Basisordner fuer
+  `src/components`, `src/state`, `src/lib`, `src/modules/aurum`,
+  `public`, `supabase` sowie `migration/unsorted-root` als Sammelort
+  fuer unsortierte Uploads.
+- **GitHub-Testbetrieb vorbereitet.** Geplante Cloudflare-Tunnel-Slots
+  via Actions-Workflow plus `@claude`-Workflow fuer Repo-Interaktion.
+- **Hostname-Basis aktualisiert.** `aurum.me.marcodemont.ch` in
+  Dev-/Start-Kontext hinterlegt, damit Tests ueber den Named Tunnel
+  stabil auf demselben Host laufen.
+
 ## v0.09
 
 - **ARGENTUM-Track aktiviert.** React/Vite/Tailwind-Implementierung
