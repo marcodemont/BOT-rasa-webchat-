@@ -69,6 +69,11 @@ function figmaAssetResolver() {
     },
     server: {
       port: 3000,
-      allowedHosts: ['argentum.marcodemont.ch', 'aurum.marcodemont.ch', '.trycloudflare.com'],
+      allowedHosts: [
+        'argentum.marcodemont.ch',
+        'aurum.marcodemont.ch',
+        'aurum.me.marcodemont.ch',
+        '.trycloudflare.com',
+      ],
     },
   });
