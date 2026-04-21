@@ -17,6 +17,8 @@ import { aurumClient } from './aurum-client';
 import { fetchMarkersForRange, mapRowToMarker, createAnchor, cleanupOldArchivedMarkers } from './markers-api';
 import { cleanupOldArchivedNotes } from './notes-api';
 import { BottomNav } from './BottomNav';
+import { QuickCreateMenu, type QuickCreateType } from './QuickCreateMenu';
+import { useAdminMode } from './useAdminMode';
 import { useSystem } from '../systems/SystemProvider';
 import type { Marker } from './types';
 
@@ -33,9 +35,12 @@ export function AurumCore({ accessToken, onLogout }: AurumCoreProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showCreateMarker, setShowCreateMarker] = useState(false);
+  const [showQuickCreateMenu, setShowQuickCreateMenu] = useState(false);
+  const [createPreset, setCreatePreset] = useState<'audio' | 'planned' | 'event' | 'compression' | undefined>(undefined);
   const [detailMarker, setDetailMarker] = useState<Marker | null>(null);
   const [useLocalMode, setUseLocalMode] = useState(false); // Fallback to localStorage if no auth
   const [markers, setMarkers] = useState<Marker[]>([]);
+  const [adminMode] = useAdminMode();
 
   // Load markers: Supabase wenn authentifiziert, sonst localStorage als Demo-Fallback
   const loadMarkersFromSupabase = async () => {
@@ -197,6 +202,20 @@ export function AurumCore({ accessToken, onLogout }: AurumCoreProps) {
     setDetailMarker(marker);
   };
 
+  const handleOpenQuickCreate = () => {
+    setShowQuickCreateMenu(true);
+  };
+
+  const handleQuickCreateSelect = async (type: QuickCreateType) => {
+    setShowQuickCreateMenu(false);
+    if (type === 'anchor') {
+      await handleCreateAnchor();
+      return;
+    }
+    setCreatePreset(type);
+    setShowCreateMarker(true);
+  };
+
   return (
     <div className={`min-h-screen bg-gradient-to-br ${theme.bgGradient} transition-colors duration-500`}>
       {/* Mobile Header (kompakt) */}
@@ -294,8 +313,7 @@ export function AurumCore({ accessToken, onLogout }: AurumCoreProps) {
         {currentView === 'timeline' && (
           <Timeline
             onMarkerClick={handleMarkerClick}
-            onCreateMarker={() => setShowCreateMarker(true)}
-            onCreateAnchor={handleCreateAnchor}
+            onCreateMarker={handleOpenQuickCreate}
             isAuthenticated={isAuthenticated}
             markers={markers}
           />
@@ -318,6 +336,15 @@ export function AurumCore({ accessToken, onLogout }: AurumCoreProps) {
         <CreateMarker
           onClose={() => setShowCreateMarker(false)}
           onSave={createMarker}
+          presetType={createPreset}
+        />
+      )}
+
+      {showQuickCreateMenu && (
+        <QuickCreateMenu
+          adminMode={adminMode}
+          onClose={() => setShowQuickCreateMenu(false)}
+          onSelect={(type) => { void handleQuickCreateSelect(type); }}
         />
       )}
 
@@ -341,7 +368,7 @@ export function AurumCore({ accessToken, onLogout }: AurumCoreProps) {
       <BottomNav
         active={currentView}
         onSelect={(v) => setCurrentView(v)}
-        onCreate={() => setShowCreateMarker(true)}
+        onCreate={handleOpenQuickCreate}
         showFab={currentView === 'timeline'}
       />
     </div>
