@@ -1,39 +1,69 @@
-name: AURUM Scheduled Tunnel
+name: AURUM Slot Orchestrator (30min + 15min offset)
 
 on:
   workflow_dispatch:
   schedule:
-    # Schweiz (CEST, UTC+2): 06:30, 09:00, 11:45, 14:30, 18:00
-    - cron: '30 4 * * *'
-    - cron: '0 7 * * *'
-    - cron: '45 9 * * *'
-    - cron: '30 12 * * *'
-    - cron: '0 16 * * *'
+    - cron: '*/15 * * * *'
 
 concurrency:
-  group: aurum-scheduled-tunnel
-  cancel-in-progress: true
+  group: aurum-slot-orchestrator
+  cancel-in-progress: false
 
 jobs:
-  slot_0630:
-    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 4 * * *'
+  orchestrate:
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 20
+    env:
+      APP_PORT: 8006
+      AURUM_TUNNEL_ID: ${{ secrets.AURUM_TUNNEL_ID }}
+      AURUM_TUNNEL_CREDENTIALS_JSON: ${{ secrets.AURUM_TUNNEL_CREDENTIALS_JSON }}
+      AURUM_TUNNEL_HOSTNAME: aurum.me.marcodemont.ch
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-      - name: Start AURUM + Tunnel
+          cache: npm
+
+      - name: Determine active slot mode
+        id: slot
         shell: bash
-        env:
-          AURUM_TUNNEL_ID: ${{ secrets.AURUM_TUNNEL_ID }}
-          AURUM_TUNNEL_CREDENTIALS_JSON: ${{ secrets.AURUM_TUNNEL_CREDENTIALS_JSON }}
-          AURUM_TUNNEL_HOSTNAME: aurum.me.marcodemont.ch
         run: |
           set -euo pipefail
-          npm ci
+          minute="$(date -u +%M)"
+
+          case "$minute" in
+            00|30)
+              mode="app"
+              ;;
+            15|45)
+              mode="maintenance"
+              ;;
+            *)
+              mode="skip"
+              ;;
+          esac
+
+          echo "minute=$minute" >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "UTC minute: $minute -> mode: $mode"
+
+      - name: Install dependencies
+        if: steps.slot.outputs.mode != 'skip'
+        shell: bash
+        run: npm ci
+
+      - name: Validate app build
+        if: steps.slot.outputs.mode != 'skip'
+        shell: bash
+        run: npm run build
+
+      - name: Run APP window (online 00-15 and 30-45)
+        if: steps.slot.outputs.mode == 'app'
+        shell: bash
+        run: |
+          set -euo pipefail
 
           mkdir -p "$HOME/.cloudflared"
           printf '%s' "$AURUM_TUNNEL_CREDENTIALS_JSON" > "$HOME/.cloudflared/${AURUM_TUNNEL_ID}.json"
@@ -42,7 +72,7 @@ jobs:
           credentials-file: ${HOME}/.cloudflared/${AURUM_TUNNEL_ID}.json
           ingress:
             - hostname: ${AURUM_TUNNEL_HOSTNAME}
-              service: http://localhost:8006
+              service: http://localhost:${APP_PORT}
             - service: http_status:404
           EOF
 
@@ -50,207 +80,40 @@ jobs:
             -o "$HOME/cloudflared"
           chmod +x "$HOME/cloudflared"
 
-          npm run dev -- --host 0.0.0.0 --port 8006 --strictPort > aurum-dev.log 2>&1 &
+          npm run dev -- --host 0.0.0.0 --port "${APP_PORT}" --strictPort > aurum-dev.log 2>&1 &
           DEV_PID=$!
           "$HOME/cloudflared" tunnel --config "$HOME/.cloudflared/aurum.yml" run > cloudflared.log 2>&1 &
           TUNNEL_PID=$!
 
           trap 'kill $DEV_PID $TUNNEL_PID 2>/dev/null || true' EXIT
 
-          while true; do
-            sleep 30
-            kill -0 "$DEV_PID"
-            kill -0 "$TUNNEL_PID"
+          for _ in {1..20}; do
+            if curl -fsS "http://127.0.0.1:${APP_PORT}" >/dev/null; then
+              echo "Healthcheck OK on port ${APP_PORT}."
+              break
+            fi
+            sleep 5
           done
 
-  slot_0900:
-    if: github.event.schedule == '0 7 * * *'
-    runs-on: ubuntu-latest
-    timeout-minutes: 75
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Start AURUM + Tunnel
+          start_ts="$(date +%s)"
+          window_seconds=840
+
+          while true; do
+            now="$(date +%s)"
+            elapsed=$((now - start_ts))
+            if [ "$elapsed" -ge "$window_seconds" ]; then
+              echo "App window finished after ${window_seconds}s."
+              break
+            fi
+            kill -0 "$DEV_PID"
+            kill -0 "$TUNNEL_PID"
+            sleep 15
+          done
+
+      - name: Run maintenance window (offline 15-30 and 45-00)
+        if: steps.slot.outputs.mode == 'maintenance'
         shell: bash
-        env:
-          AURUM_TUNNEL_ID: ${{ secrets.AURUM_TUNNEL_ID }}
-          AURUM_TUNNEL_CREDENTIALS_JSON: ${{ secrets.AURUM_TUNNEL_CREDENTIALS_JSON }}
-          AURUM_TUNNEL_HOSTNAME: aurum.me.marcodemont.ch
         run: |
           set -euo pipefail
-          npm ci
-
-          mkdir -p "$HOME/.cloudflared"
-          printf '%s' "$AURUM_TUNNEL_CREDENTIALS_JSON" > "$HOME/.cloudflared/${AURUM_TUNNEL_ID}.json"
-          cat > "$HOME/.cloudflared/aurum.yml" <<EOF
-          tunnel: ${AURUM_TUNNEL_ID}
-          credentials-file: ${HOME}/.cloudflared/${AURUM_TUNNEL_ID}.json
-          ingress:
-            - hostname: ${AURUM_TUNNEL_HOSTNAME}
-              service: http://localhost:8006
-            - service: http_status:404
-          EOF
-
-          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-            -o "$HOME/cloudflared"
-          chmod +x "$HOME/cloudflared"
-
-          npm run dev -- --host 0.0.0.0 --port 8006 --strictPort > aurum-dev.log 2>&1 &
-          DEV_PID=$!
-          "$HOME/cloudflared" tunnel --config "$HOME/.cloudflared/aurum.yml" run > cloudflared.log 2>&1 &
-          TUNNEL_PID=$!
-
-          trap 'kill $DEV_PID $TUNNEL_PID 2>/dev/null || true' EXIT
-
-          while true; do
-            sleep 30
-            kill -0 "$DEV_PID"
-            kill -0 "$TUNNEL_PID"
-          done
-
-  slot_1145:
-    if: github.event.schedule == '45 9 * * *'
-    runs-on: ubuntu-latest
-    timeout-minutes: 105
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Start AURUM + Tunnel
-        shell: bash
-        env:
-          AURUM_TUNNEL_ID: ${{ secrets.AURUM_TUNNEL_ID }}
-          AURUM_TUNNEL_CREDENTIALS_JSON: ${{ secrets.AURUM_TUNNEL_CREDENTIALS_JSON }}
-          AURUM_TUNNEL_HOSTNAME: aurum.me.marcodemont.ch
-        run: |
-          set -euo pipefail
-          npm ci
-
-          mkdir -p "$HOME/.cloudflared"
-          printf '%s' "$AURUM_TUNNEL_CREDENTIALS_JSON" > "$HOME/.cloudflared/${AURUM_TUNNEL_ID}.json"
-          cat > "$HOME/.cloudflared/aurum.yml" <<EOF
-          tunnel: ${AURUM_TUNNEL_ID}
-          credentials-file: ${HOME}/.cloudflared/${AURUM_TUNNEL_ID}.json
-          ingress:
-            - hostname: ${AURUM_TUNNEL_HOSTNAME}
-              service: http://localhost:8006
-            - service: http_status:404
-          EOF
-
-          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-            -o "$HOME/cloudflared"
-          chmod +x "$HOME/cloudflared"
-
-          npm run dev -- --host 0.0.0.0 --port 8006 --strictPort > aurum-dev.log 2>&1 &
-          DEV_PID=$!
-          "$HOME/cloudflared" tunnel --config "$HOME/.cloudflared/aurum.yml" run > cloudflared.log 2>&1 &
-          TUNNEL_PID=$!
-
-          trap 'kill $DEV_PID $TUNNEL_PID 2>/dev/null || true' EXIT
-
-          while true; do
-            sleep 30
-            kill -0 "$DEV_PID"
-            kill -0 "$TUNNEL_PID"
-          done
-
-  slot_1430:
-    if: github.event.schedule == '30 12 * * *'
-    runs-on: ubuntu-latest
-    timeout-minutes: 70
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Start AURUM + Tunnel
-        shell: bash
-        env:
-          AURUM_TUNNEL_ID: ${{ secrets.AURUM_TUNNEL_ID }}
-          AURUM_TUNNEL_CREDENTIALS_JSON: ${{ secrets.AURUM_TUNNEL_CREDENTIALS_JSON }}
-          AURUM_TUNNEL_HOSTNAME: aurum.me.marcodemont.ch
-        run: |
-          set -euo pipefail
-          npm ci
-
-          mkdir -p "$HOME/.cloudflared"
-          printf '%s' "$AURUM_TUNNEL_CREDENTIALS_JSON" > "$HOME/.cloudflared/${AURUM_TUNNEL_ID}.json"
-          cat > "$HOME/.cloudflared/aurum.yml" <<EOF
-          tunnel: ${AURUM_TUNNEL_ID}
-          credentials-file: ${HOME}/.cloudflared/${AURUM_TUNNEL_ID}.json
-          ingress:
-            - hostname: ${AURUM_TUNNEL_HOSTNAME}
-              service: http://localhost:8006
-            - service: http_status:404
-          EOF
-
-          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-            -o "$HOME/cloudflared"
-          chmod +x "$HOME/cloudflared"
-
-          npm run dev -- --host 0.0.0.0 --port 8006 --strictPort > aurum-dev.log 2>&1 &
-          DEV_PID=$!
-          "$HOME/cloudflared" tunnel --config "$HOME/.cloudflared/aurum.yml" run > cloudflared.log 2>&1 &
-          TUNNEL_PID=$!
-
-          trap 'kill $DEV_PID $TUNNEL_PID 2>/dev/null || true' EXIT
-
-          while true; do
-            sleep 30
-            kill -0 "$DEV_PID"
-            kill -0 "$TUNNEL_PID"
-          done
-
-  slot_1800:
-    if: github.event.schedule == '0 16 * * *'
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Start AURUM + Tunnel
-        shell: bash
-        env:
-          AURUM_TUNNEL_ID: ${{ secrets.AURUM_TUNNEL_ID }}
-          AURUM_TUNNEL_CREDENTIALS_JSON: ${{ secrets.AURUM_TUNNEL_CREDENTIALS_JSON }}
-          AURUM_TUNNEL_HOSTNAME: aurum.me.marcodemont.ch
-        run: |
-          set -euo pipefail
-          npm ci
-
-          mkdir -p "$HOME/.cloudflared"
-          printf '%s' "$AURUM_TUNNEL_CREDENTIALS_JSON" > "$HOME/.cloudflared/${AURUM_TUNNEL_ID}.json"
-          cat > "$HOME/.cloudflared/aurum.yml" <<EOF
-          tunnel: ${AURUM_TUNNEL_ID}
-          credentials-file: ${HOME}/.cloudflared/${AURUM_TUNNEL_ID}.json
-          ingress:
-            - hostname: ${AURUM_TUNNEL_HOSTNAME}
-              service: http://localhost:8006
-            - service: http_status:404
-          EOF
-
-          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
-            -o "$HOME/cloudflared"
-          chmod +x "$HOME/cloudflared"
-
-          npm run dev -- --host 0.0.0.0 --port 8006 --strictPort > aurum-dev.log 2>&1 &
-          DEV_PID=$!
-          "$HOME/cloudflared" tunnel --config "$HOME/.cloudflared/aurum.yml" run > cloudflared.log 2>&1 &
-          TUNNEL_PID=$!
-
-          trap 'kill $DEV_PID $TUNNEL_PID 2>/dev/null || true' EXIT
-
-          while true; do
-            sleep 30
-            kill -0 "$DEV_PID"
-            kill -0 "$TUNNEL_PID"
-          done
+          echo "Maintenance slot: app remains offline; build validation already passed."
+          echo "Use this slot for fixes/merges/deploy prep while traffic is off."
