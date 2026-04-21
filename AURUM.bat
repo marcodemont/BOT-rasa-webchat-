@@ -124,8 +124,8 @@ if "%TUNNEL_AVAILABLE%"=="1" (
 
 echo.
 echo  ======================================================
-echo  AURUM ist die Live-Version.
-echo  Laeuft parallel zu CUPRUM (8008, Werkstatt).
+echo  AURUM ist die Haupt-App ^(ex-CUPRUM-Stand^).
+echo  CUPRUM ist aktuell als leeres Werkstatt-Template reserviert.
 echo.
 echo  Druecke Strg+C im Server-Fenster, um AURUM zu beenden.
 echo  Das Tunnel-Fenster musst du separat schliessen.

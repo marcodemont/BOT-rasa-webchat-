@@ -1,5 +1,16 @@
 # Migration.md — AURUM/CUPRUM Neuordnung (Root -> saubere Struktur)
 
+## 0) Naming-Entscheid (neu)
+
+- **CUPRUM ist fachlich das neue AURUM** (besserer Stand).
+- Umsetzung ab jetzt:
+  - **AURUM = Main/Live-Codebase** (enthaelt den ex-CUPRUM-Stand)
+  - **CUPRUM = leeres Werkstatt-Template** fuer neue Iterationen
+
+Damit ist die Namenslage eindeutig und konsistent fuer die naechsten Schritte.
+
+---
+
 ## 1) Zielbild
 
 Wir migrieren von einem historisch gewachsenen Root-Mix in eine klare Doppelstruktur:
@@ -143,4 +154,3 @@ Im naechsten Schritt erstelle ich eine **Datei-fuer-Datei Migrationsmatrix** (CS
 - Aufwand (S/M/L)
 - Risiko
 - Entscheidung: Keep / Refactor / Archive
-
