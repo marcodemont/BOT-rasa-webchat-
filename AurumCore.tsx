@@ -96,6 +96,28 @@ export function AurumCore({ accessToken, onLogout }: AurumCoreProps) {
 
   const handleCreateAnchor = async () => {
     try {
+      if (useLocalMode || !isAuthenticated) {
+        const now = new Date();
+        const anchorMarker: Marker = {
+          id: `anchor-${Date.now()}`,
+          userId: 'demo-user',
+          title: 'Anker',
+          time: now.toISOString(),
+          color: '#b85555',
+          completed: false,
+          noteIds: [],
+          tags: [],
+          recurring: false,
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+          markerType: 'anchor',
+        };
+        const updatedMarkers = [...markers, anchorMarker];
+        setMarkers(updatedMarkers);
+        localStorage.setItem('aurum-markers', JSON.stringify(updatedMarkers));
+        return;
+      }
+
       await createAnchor();
       await loadMarkersFromSupabase();
     } catch (err) {
