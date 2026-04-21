@@ -1,11 +1,13 @@
 @echo off
 setlocal
 title AURUM (V0.1 React/TSX)
-cd /d "%~dp0AURUM"
+set "AURUM_HOST=aurum.me.marcodemont.ch"
+set "AUTO_GIT_PULL=1"
+cd /d "%~dp0"
 
 if not exist "package.json" (
-    echo [Fehler] AURUM\package.json nicht gefunden.
-    echo Erwartet wird der Ordner "AURUM\" mit package.json, vite.config.ts etc.
+    echo [Fehler] package.json nicht gefunden.
+    echo Erwartet wird das Projekt-Root mit package.json und vite.config.ts.
     pause
     exit /b 1
 )
@@ -16,6 +18,35 @@ if errorlevel 1 (
     echo Installiere Node.js LTS von https://nodejs.org/
     pause
     exit /b 1
+)
+
+if "%AUTO_GIT_PULL%"=="1" (
+    if exist ".git" (
+        where git >nul 2>&1
+        if errorlevel 1 (
+            echo [Hinweis] Git nicht gefunden - ueberspringe automatisches Update aus GitHub.
+        ) else (
+            for /f %%b in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "GIT_BRANCH=%%b"
+            if not defined GIT_BRANCH (
+                echo [Hinweis] Git-Branch konnte nicht gelesen werden - ueberspringe Pull.
+            ) else (
+                echo.
+                echo  Hole aktuelle Aenderungen von GitHub ^(origin/%GIT_BRANCH%^)...
+                git fetch origin
+                if errorlevel 1 (
+                    echo [Warnung] git fetch fehlgeschlagen - starte mit lokalem Stand.
+                ) else (
+                    git pull --ff-only origin %GIT_BRANCH%
+                    if errorlevel 1 (
+                        echo [Warnung] git pull fehlgeschlagen ^(evtl. lokale Konflikte^).
+                        echo [Warnung] Bitte manuell pruefen: git status / git pull --rebase
+                    )
+                )
+            )
+        )
+    ) else (
+        echo [Hinweis] Kein .git-Verzeichnis gefunden - ueberspringe GitHub-Update.
+    )
 )
 
 if not exist "node_modules" (
@@ -77,7 +108,7 @@ if "%TUNNEL_AVAILABLE%"=="1" (
     if "%TUNNEL_CONFIGURED%"=="1" (
         echo.
         echo  Internet ^(HTTPS, Mikro/Geo OK^):
-        echo    https://aurum.marcodemont.ch/
+        echo    https://%AURUM_HOST%/
         echo.
         echo  Starte Cloudflare-Tunnel 'aurum' in separatem Fenster...
         start "AURUM Cloudflare Tunnel" cmd /k cloudflared tunnel --config "%USERPROFILE%\.cloudflared\aurum.yml" run aurum
@@ -93,8 +124,8 @@ if "%TUNNEL_AVAILABLE%"=="1" (
 
 echo.
 echo  ======================================================
-echo  AURUM ist die Live-Version.
-echo  Laeuft parallel zu CUPRUM (8008, Werkstatt).
+echo  AURUM ist die Haupt-App ^(ex-CUPRUM-Stand^).
+echo  CUPRUM ist aktuell als leeres Werkstatt-Template reserviert.
 echo.
 echo  Druecke Strg+C im Server-Fenster, um AURUM zu beenden.
 echo  Das Tunnel-Fenster musst du separat schliessen.

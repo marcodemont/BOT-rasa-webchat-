@@ -151,7 +151,7 @@ function titleFallback(row: MarkerRow): string {
     case 'audio': return 'Audiomarker';
     case 'compression': return 'Kompression';
     case 'anchor': return row.location_label || 'Anker';
-    case 'planned': return 'Geplant';
+    case 'planned': return 'Termin';
     default: return 'Marker';
   }
 }
@@ -205,5 +205,5 @@ export const MARKER_TYPE_LABELS: Record<MarkerType, string> = {
   anchor: 'Anker',
   audio: 'Audiomarker',
   compression: 'Kompression',
-  planned: 'Geplant',
+  planned: 'Termin',
 };

@@ -14,6 +14,7 @@ interface CreateMarkerProps {
   onClose: () => void;
   onSave: (marker: Omit<Marker, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => void;
   initialDate?: Date;
+  presetType?: 'audio' | 'planned' | 'event' | 'compression';
 }
 
 const COLORS = [
@@ -37,10 +38,20 @@ const WEEKDAYS = [
   { short: 'So', full: 'Sonntag', value: 0 },
 ];
 
-export function CreateMarker({ onClose, onSave, initialDate = new Date() }: CreateMarkerProps) {
+export function CreateMarker({ onClose, onSave, initialDate = new Date(), presetType }: CreateMarkerProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
-  const [title, setTitle] = useState('');
-  const [color, setColor] = useState(COLORS[0].value);
+  const [title, setTitle] = useState(
+    presetType === 'event' ? 'Ereignis' :
+    presetType === 'planned' ? 'Termin' :
+    presetType === 'compression' ? 'Kompression' :
+    presetType === 'audio' ? 'Audiomarker' : ''
+  );
+  const [color, setColor] = useState(
+    presetType === 'audio' ? '#b89668' :
+    presetType === 'compression' ? '#c08a7a' :
+    presetType === 'planned' || presetType === 'event' ? '#b5c5d5' :
+    COLORS[0].value
+  );
   const [duration, setDuration] = useState<number | undefined>(30);
   const [time, setTime] = useState(() => {
     const now = new Date(initialDate);
@@ -62,11 +73,23 @@ export function CreateMarker({ onClose, onSave, initialDate = new Date() }: Crea
   };
 
   const handleSave = () => {
+    const mappedType =
+      presetType === 'audio' ? 'audio' :
+      presetType === 'compression' ? 'compression' :
+      presetType === 'planned' || presetType === 'event' ? 'planned' :
+      undefined;
+
     onSave({
-      title: title || 'Unbenannter Marker',
+      title:
+        title ||
+        (presetType === 'event' ? 'Ereignis' :
+        presetType === 'planned' ? 'Termin' :
+        presetType === 'compression' ? 'Kompression' :
+        presetType === 'audio' ? 'Audiomarker' : 'Unbenannter Marker'),
       time: time.toISOString(),
       duration,
       color,
+      markerType: mappedType,
       completed: false,
       noteIds: [],
       tags: [],
