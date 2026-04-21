@@ -1,20 +1,21 @@
-# AURUM via GitHub Actions + Cloudflare Tunnel (Test-Slots)
+# AURUM via GitHub Actions + Cloudflare Tunnel (30-Minuten-Zyklen mit 15-Minuten-Offset)
 
-Diese Variante ist fuer **zeitlich begrenzte Testfenster** gedacht, nicht fuer 24/7-Betrieb.
+Diese Variante ist fuer **kontinuierliche Stundenslots** gedacht:
+
+- **Online-Fenster:** `00-15` und `30-45` jeder Stunde
+- **Offline-/Fix-Fenster:** `15-30` und `45-00` jeder Stunde
+
+Damit laeuft die App automatisch im 30-Minuten-Takt, plus einem um 15 Minuten versetzten zweiten Takt.
 
 ## 1) Was im Repo enthalten ist
 
 - Workflow: `.github/workflows/aurum-scheduled-tunnel.yml`
-- Geplante UTC-Starts:
-  - `30 4 * * *`  -> 06:30 Schweiz (CEST)
-  - `0 7 * * *`   -> 09:00 Schweiz (CEST)
-  - `45 9 * * *`  -> 11:45 Schweiz (CEST)
-  - `30 12 * * *` -> 14:30 Schweiz (CEST)
-  - `0 16 * * *`  -> 18:00 Schweiz (CEST)
-- Laufzeiten pro Slot:
-  - 70 min, 75 min, 105 min, 70 min, 360 min
+- Trigger: `*/15 * * * *` (alle 15 Minuten, 24/7, auch nachts)
+- Slot-Logik in UTC-Minuten:
+  - `00` oder `30` -> `app` (Tunnel + Dev-Server online)
+  - `15` oder `45` -> `maintenance` (App bleibt offline, Build-Check laeuft)
 
-> Achtung: GitHub-Cron laeuft in UTC. Bei Winterzeit (CET, UTC+1) musst du die Zeiten anpassen.
+> Hinweis: GitHub-Cron laeuft in UTC und kann mit leichter Verzoegerung starten (typisch 5-15 Minuten).
 
 ## 2) Cloudflare Named Tunnel vorbereiten (einmalig)
 
@@ -40,23 +41,33 @@ Notiere:
 
 In GitHub -> Settings -> Secrets and variables -> Actions:
 
-- `AURUM_TUNNEL_ID`  
-  Beispiel: `435a13b5-2e43-449a-a6a6-e3ccb5fa9f71`
-- `AURUM_TUNNEL_CREDENTIALS_JSON`  
-  kompletter Inhalt der Tunnel-Credentials-JSON als Secret-Wert
+- `AURUM_TUNNEL_ID`
+- `AURUM_TUNNEL_CREDENTIALS_JSON`
 
 ## 4) Was der Workflow pro Slot macht
 
+### In jedem aktiven Slot (`00/15/30/45`)
+
 1. Checkout vom Repo
 2. Node 20 + `npm ci`
-3. Schreiben von `~/.cloudflared/<tunnel-id>.json`
-4. Erzeugen von `~/.cloudflared/aurum.yml`
-5. Start von Vite (`npm run dev -- --host 0.0.0.0 --port 8006 --strictPort`)
-6. Start von `cloudflared tunnel --config ... run`
-7. Job laeuft bis Timeout und endet dann automatisch
+3. `npm run build` als Funktions-/Integritaetscheck
+
+### In App-Slots (`00` und `30`)
+
+4. Schreibt Cloudflare-Konfiguration nach `~/.cloudflared`
+5. Startet App (`npm run dev -- --host 0.0.0.0 --port 8006 --strictPort`)
+6. Startet `cloudflared tunnel ... run`
+7. Fuehrt Healthcheck auf `http://127.0.0.1:8006` aus
+8. Haelt das Fenster ca. 14 Minuten offen, dann kontrolliertes Beenden
+
+### In Maintenance-Slots (`15` und `45`)
+
+4. App bleibt absichtlich offline
+5. Slot ist fuer Bugfix-/Merge-/Stabilisierungsfenster vorgesehen
 
 ## 5) Bekannte Grenzen
 
-- Startverzoegerung bei Cron (typisch 5-15 Minuten moeglich)
-- 6h Job-Limit in Actions (darueber wird beendet)
+- Startverzoegerung bei Cron moeglich
+- Laufzeitlimit pro Actions-Job
 - Minutenverbrauch bei privaten Repos
+- Der Workflow validiert automatisiert (`npm run build`), behebt Bugs aber nicht selbststaendig ohne neue Commits
